@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\IncomeMessage;
+use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
 use App\Services\TelegramService;
@@ -38,6 +39,7 @@ class TelegramController extends Controller
         }
         if($writer && $canStoreMessage){
             IncomeMessage::storeData($message,$writer->id,$sending ? $sending->id : 0);            
+            MessagePlan::writeToExcelDaily();
         }
     }
 

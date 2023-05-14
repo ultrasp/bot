@@ -6,7 +6,7 @@ use App\Models\MessagePlan;
 use Google_Client;
 use Google_Service_Sheets;
 use Google_Service_Sheets_ClearValuesRequest;
-
+use Google_Service_Sheets_BatchUpdateSpreadsheetRequest;
 // https://www.nidup.io/blog/manipulate-google-sheets-in-php-with-api
 class GoogleService
 {
@@ -60,25 +60,61 @@ class GoogleService
 
             }
         }
-        if(!empty($templates)){
+        if (!empty($templates)) {
             MessagePlan::saveTemplates($templates);
         }
     }
 
-    public function writeValues($sheet,$rows)
+    public function writeValues($sheet, $rows)
     {
         $valueRange = new \Google_Service_Sheets_ValueRange();
         $valueRange->setValues($rows);
-        $range = $sheet.'!A2'; // where the replacement will start, here, first column and second line
+        $range = $sheet . '!A2'; // where the replacement will start, here, first column and second line
         $options = ['valueInputOption' => 'USER_ENTERED'];
-        $this->service->spreadsheets_values->update(self::SPREADSHEET_ID,$range, $valueRange, $options);
+        $this->service->spreadsheets_values->update(self::SPREADSHEET_ID, $range, $valueRange, $options);
     }
 
-    public function deleteRows($sheet,$diapazon = null)
+    public function deleteRows($sheet, $diapazon = null)
     {
         // $range = 'Sheet1!A23:F24'; // the range to clear, the 23th and 24th lines
-        $range = $sheet .($diapazon ?  '!'.$diapazon : '');
+        $range = $sheet . ($diapazon ? '!' . $diapazon : '');
         $clear = new Google_Service_Sheets_ClearValuesRequest();
         $this->service->spreadsheets_values->clear(self::SPREADSHEET_ID, $range, $clear);
     }
+
+    public function checkExistSheet($sheetName)
+    {
+        $sheetInfo = $this->service->spreadsheets->get(self::SPREADSHEET_ID);
+        $allsheet_info = $sheetInfo['sheets'];
+        $idCats = array_column($allsheet_info, 'properties');
+
+        if (!$this->checkSheetArray($idCats, $sheetName)) {
+            $this->addNewSheet($sheetName);
+        }
+    }
+
+    function checkSheetArray(array $myArray, $word)
+    {
+        foreach ($myArray as $element) {
+            if ($element->title == $word) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function addNewSheet($sheetName)
+    {
+
+        $body = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest(
+            [
+                'requests' => [
+                    'addSheet' => ['properties' => ['title' => $sheetName]]
+                ]
+            ]
+        );
+
+        $result = $this->service->spreadsheets->batchUpdate(self::SPREADSHEET_ID, $body);
+    }
+
 }
