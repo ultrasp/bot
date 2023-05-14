@@ -31,7 +31,7 @@ class TelegramController extends Controller
         }
         if(!empty($writer)){
             $sending = MessageSending::getLatestSendByWorkerId($writer->id);
-            if(!empty($sending)){
+            if(!empty($sending) && empty($sending->answer_time)){
                 $sending->answer_time = date('Y-m-d H:i:s');
                 $sending->save();
             }
