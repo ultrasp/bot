@@ -39,7 +39,8 @@ class MessageSending extends Model
         $sendings = self::where([
             'send_time' => null,
         ])
-        ->where('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('-5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
+        ->where('send_plan_time' ,  date('Y-m-d H:i:s'))
+        // ->whereRaw('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('+5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
         ->get();
         $service = new TelegramService();
         foreach($sendings as $sending){

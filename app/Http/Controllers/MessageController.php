@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MessageSending;
+use App\Models\Receiver;
 
 class MessageController extends Controller
 {

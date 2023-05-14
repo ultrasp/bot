@@ -19,8 +19,6 @@ class TelegramController extends Controller
     public function listener(Request $request){
         $data = $request->all();
         // var_dump($request->getContent());
-        // $service = new TelegramService();
-        // $data = '{"update_id":319789370,"message":{"message_id":14,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684038570,"text":"asdas"}}';
         $message = json_decode(json_encode($data));
         
         $canStoreMessage = false;
@@ -29,6 +27,7 @@ class TelegramController extends Controller
         if($message->message->chat->type == 'private' && !$message->message->from->is_bot){
             $writer = Receiver::storeData($message->message->chat);
             $canStoreMessage = true;
+            Receiver::writeToSheet();
         }
         if(!empty($writer)){
             $sending = MessageSending::getLatestSendByWorkerId($writer->id);

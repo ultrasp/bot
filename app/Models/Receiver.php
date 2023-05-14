@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\GoogleService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -33,4 +34,28 @@ class Receiver extends Model
         return $user;
     }
     //
+
+    public static function writeToSheet(){
+        $all =  self::get();
+        $data = [
+            [
+                'username', 'last_name','first_name','user_type','last_answer_time','message_cnt'
+            ]
+        ];
+        foreach ($all as $key => $user) {
+            $data[] = [
+                $user->username,
+                $user->lastname ?? '',
+                $user->firstname ?? '',
+                $user->user_type,
+                $user->last_answer_time ? date('Y-m-d H:i:s',strtotime($user->last_answer_time)) : '',
+                $user->message_cnt
+            ];
+        }
+        $sheet = 'users';
+        $service = new GoogleService();
+        // dd($data);
+        $service->deleteRows($sheet);
+        $service->writeValues($sheet,$data);
+    }
 }

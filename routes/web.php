@@ -31,3 +31,6 @@ Route::get('/make','MessageController@makeSendings');
 
 //every minute
 Route::get('/send','MessageController@sendQuestion');
+
+//
+Route::get('/cron','CronController@run');
