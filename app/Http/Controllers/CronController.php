@@ -8,6 +8,7 @@ use App\Services\GoogleService;
 class CronController extends Controller
 {
     public function run(){
+        echo date('Y-m-d H:i:s');
         if( date( 'H') == 0 && date( 'i') == 0) {
             MessageSending::createSendings();
         }
