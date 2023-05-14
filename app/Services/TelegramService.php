@@ -9,7 +9,7 @@ class TelegramService
 
     private $client;
 
-    const URL_LISTENER = 'https://bot.lets.uz/api/telegrames'; 
+    const URL_LISTENER = 'http://bot.lets.uz/listener'; 
 
     const  BOTID = '6128162329:AAHdm_brrZ7E10Svm-BMfDweXXrVKVNTyqI';
 
