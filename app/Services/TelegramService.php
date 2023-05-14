@@ -40,7 +40,6 @@ class TelegramService
 
         $body = $response->getBody()->getContents();
         return json_decode($body);
-        // var_dump($body);    
     }
 
 }
