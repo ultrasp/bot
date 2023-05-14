@@ -28,12 +28,18 @@ class MessageSending extends Model
         } 
     }
 
-
+    public static function getLatestSendByWorkerId($workerId){
+        return self::whereNotNull('send_time')
+        ->where('receiver_id',$workerId)
+        ->where('telegram_message_id','>','0')
+        ->orderBy('send_time', 'desc')
+        ->first();
+    }
     public static function send(){
         $sendings = self::where([
             'send_time' => null,
         ])
-        ->whereRaw('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('-5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
+        ->where('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('-5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
         ->get();
         $service = new TelegramService();
         foreach($sendings as $sending){

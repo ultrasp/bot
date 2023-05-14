@@ -19,7 +19,7 @@ Route::get('/', function () {
 
 Route::get('/test','TelegramController@send');
 
-Route::get('/listener','TelegramController@listener');
+Route::post('/listener','TelegramController@listener');
 
 Route::get('/setcert','TelegramController@setCert');
 Route::get('/read','TelegramController@getIncomes');
