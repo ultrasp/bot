@@ -17,6 +17,7 @@ class TelegramController extends Controller
         $post = $request->input();
         $service = new TelegramService();
         var_dump($post);
+        file_put_contents('income.json', json_encode($post));
         // $tel->saveUpdate($post);
 
     }
