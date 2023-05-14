@@ -39,7 +39,8 @@ class TelegramService
         $response = $this->client->request('POST', self::TELEGRAM_URL.self::BOTID.'/sendMessage', ['json' => $params]);
 
         $body = $response->getBody()->getContents();
-        var_dump($body);    
+        return json_decode($body);
+        // var_dump($body);    
     }
 
 }

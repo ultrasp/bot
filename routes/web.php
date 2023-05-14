@@ -19,9 +19,15 @@ Route::get('/', function () {
 
 Route::get('/test','TelegramController@send');
 
-Route::post('/listener','TelegramController@listener');
+Route::get('/listener','TelegramController@listener');
 
 Route::get('/setcert','TelegramController@setCert');
 Route::get('/read','TelegramController@getIncomes');
 
 Route::get('/google','GoogleController@get');
+
+//every day
+Route::get('/make','MessageController@makeSendings');
+
+//every minute
+Route::get('/send','MessageController@sendQuestion');
