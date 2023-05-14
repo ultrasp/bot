@@ -105,6 +105,7 @@ class MessagePlan extends Model
             }
         }
         // dd($data);
+        $service->deleteRows($newSheetName);
         $service->writeValues($newSheetName, array_values($data));
     }
 }
