@@ -27,6 +27,10 @@ class TelegramController extends Controller
         $service->setCert();
     }
 
+    public function getIncomes(){
+        $str = file_get_contents('income.json');
+        echo $str;
+    }
     
     //
 }
