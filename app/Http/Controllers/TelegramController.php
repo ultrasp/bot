@@ -14,7 +14,8 @@ class TelegramController extends Controller
 
     public function send(){
         $service = new TelegramService();
-        $service->sendMessage('test','2242981');
+        // $service->sendMessage('test','2242981');
+        $service->setMyCommands();
     }
 
     public function listener(Request $request){
