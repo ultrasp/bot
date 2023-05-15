@@ -40,13 +40,14 @@ class MessageSending extends Model
     }
     public static function send()
     {
-        $date = date('Y-m-d H:i:00');
-        echo $date;
+        // $date = date('Y-m-d H:i:00');
+        // echo $date;
         $sendings = self::where([
             'send_time' => null,
         ])
-            ->where('send_plan_time', $date)
+            // ->where('send_plan_time', $date)
             // ->whereRaw('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('+5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
+            ->whereRaw('send_plan_time <=  "'.date('Y-m-d H:i:s').'"')
             ->get();
         var_dump($sendings);
         $service = new TelegramService();
