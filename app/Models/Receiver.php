@@ -14,7 +14,8 @@ class Receiver extends Model
         return self::firstOrNew(['username' =>  $username]);
     }
 
-    const USER_TYPE_EMPLOYEE = 1;
+    const USER_TYPE_EMPLOYEE = 2;
+    const USER_TYPE_GUEST = 0;
 
     public static function getEmployees(){
         return self::where(['user_type' => self::USER_TYPE_EMPLOYEE])->get();
@@ -26,7 +27,7 @@ class Receiver extends Model
             $user->firstname = $chatData->first_name;
             $user->chat_id = $chatData->id;
             $user->lastname = $chatData->last_name;
-            $user->user_type = self::USER_TYPE_EMPLOYEE;
+            $user->user_type = self::USER_TYPE_GUEST;
         }
         $user->last_answer_time = date('Y-m-d H:i:s');
         $user->message_cnt += 1;
