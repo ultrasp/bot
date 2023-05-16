@@ -22,6 +22,7 @@ class TelegramController extends Controller
     public function listener(Request $request)
     {
         $data = $request->all();
+        file_put_contents('meesages',json_encode($data));
         // var_dump($request->getContent());
         $message = json_decode(json_encode($data));
         $service = new TelegramService();
