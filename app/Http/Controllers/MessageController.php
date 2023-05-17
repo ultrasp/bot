@@ -11,10 +11,14 @@ class MessageController extends Controller
 
     public function makeSendings(){
         // MessageSending::createSendings();
-        MessagePlan::makeSystemAsk();
     }
 
     public function sendQuestion(){
         MessageSending::send();
+    }
+
+    public function makeInit(){
+        MessagePlan::makeSystemAsk();
+        Receiver::storeBots();
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class IncomeMessage extends Model
 {
     use SoftDeletes;
-    public static function storeData($messageData, $writer_id, $sending_id, $messagePlanId)
+    public static function storeData($messageData, $writer_id, $sending_id, $messagePlanId, $type = 0)
     {
         $message = new self();
         $message->writer_id = $writer_id;
@@ -17,6 +17,7 @@ class IncomeMessage extends Model
         $message->update_id = $messageData->update_id;
         $message->sending_id = $sending_id;
         $message->message_plan_id = $messagePlanId;
+        $message->type = $type;
         $message->save();
         return $message;
     }

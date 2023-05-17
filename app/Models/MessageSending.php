@@ -12,6 +12,11 @@ class MessageSending extends Model
         return $this->belongsTo(Receiver::class);
     }
 
+    public function message_plan()
+    {
+        return $this->belongsTo(MessagePlan::class);
+    }
+
     public static function createSendings()
     {
         $receivers = Receiver::getEmployees();
@@ -19,15 +24,23 @@ class MessageSending extends Model
         if (!empty($receivers) && !empty($templates)) {
             foreach ($receivers as $receiver) {
                 foreach ($templates as $template) {
-                    $item = new self();
-                    $item->receiver_id = $receiver->id;
-                    $item->message_plan_id = $template->id;
-                    $item->send_plan_time = date('Y-m-d H:i:s', strtotime('midnight +' . $template->send_minute . ' minutes'));
-                    $item->message = $template->template;
-                    $item->save();
+                    $send_time = date('Y-m-d H:i:s', strtotime('midnight +' . $template->send_minute . ' minutes'));
+                    $item = self::newItem($receiver->id, $template->id, $send_time, $template->template);
                 }
             }
         }
+    }
+
+    public static function newItem($receiver_id, $message_plan_id, $send_time, $message, $withSave = true)
+    {
+        $item = new self();
+        $item->receiver_id = $receiver_id;
+        $item->message_plan_id = $message_plan_id;
+        $item->send_plan_time = $send_time;
+        $item->message = $message;
+        if ($withSave)
+            $item->save();
+        return $item;
     }
 
     public static function getLatestSendByWorkerId($workerId)
@@ -47,25 +60,32 @@ class MessageSending extends Model
         ])
             // ->where('send_plan_time', $date)
             // ->whereRaw('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('+5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
-            ->whereRaw('send_plan_time <=  "'.date('Y-m-d H:i:s').'"')
+            ->whereRaw('send_plan_time <=  "' . date('Y-m-d H:i:s') . '"')
             ->get();
         var_dump($sendings);
         $service = new TelegramService();
         foreach ($sendings as $sending) {
             if (!empty($sending->receiver)) {
-                $sending->send_time = date('Y-m-d H:i:s');
-                $sending->save();
                 $status = $service->sendMessage($sending->message, $sending->receiver->chat_id);
-                $sending->telegram_message_id = $status->ok ? $status->result->message_id : -1;
-                $sending->save();
+
+                // $writer = Receiver::getBot($sending->receiver->id,);
+                // $item = self::newItem($receiver->id,$template->id,$send_time,$template->template);
+                // IncomeMessage::storeData($sending->message, $writer->id, $sending ? $sending->id : 0, $sending->message_plan_id,1);
+                $sending->saveSendTime($status->ok ? $status->result->message_id : -1);
             }
         }
+    }
+
+    public function saveSendTime($api_message_id){
+        $this->send_time = date('Y-m-d H:i:s');
+        $this->telegram_message_id = $api_message_id;
+        $this->save();
     }
 
     public static function getDailyInfo($date)
     {
         return MessageSending::query()
-            ->whereRaw('DATE(send_plan_time) = "'.$date.'"')
+            ->whereRaw('DATE(send_plan_time) = "' . $date . '"')
             ->get();
     }
 

@@ -18,8 +18,9 @@ Route::get('/', function () {
 });
 
 Route::get('/test','TelegramController@send');
+Route::get('/init','MessageController@makeInit');
 
-Route::post('/listener','TelegramController@listener');
+Route::get('/listener','TelegramController@listener');
 
 Route::get('/setcert','TelegramController@setCert');
 Route::get('/read','TelegramController@getIncomes');

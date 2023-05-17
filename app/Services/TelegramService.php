@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MessagePlan;
+use App\Models\MessageSending;
 use GuzzleHttp\Client;
 
 class TelegramService
@@ -32,6 +33,13 @@ class TelegramService
         var_dump($body);
     }
 
+    public function deleteWebhook()
+    {
+        $response = $this->client->request('POST', self::TELEGRAM_URL . self::BOTID . '/deleteWebhook');
+        $body = $response->getBody()->getContents();
+        var_dump($body);
+    }
+
     public function sendMessage($message, $chat_id, $reply_to_message_id = null)
     {
         $params = [
@@ -44,6 +52,7 @@ class TelegramService
         $response = $this->client->request('POST', self::TELEGRAM_URL . self::BOTID . '/sendMessage', ['json' => $params]);
 
         $body = $response->getBody()->getContents();
+        // var_dump($body);
         return json_decode($body);
     }
 
@@ -76,7 +85,7 @@ class TelegramService
 
     public function getCommandPlanId($text)
     {
-        if (in_array($text, $this->empCommands())) {
+        if (in_array(substr($text, 1), $this->empCommands())) {
             $mplan = MessagePlan::getSystemAsk($text);
             if (!empty($mplan)) {
                 return $mplan->id;
@@ -85,11 +94,12 @@ class TelegramService
         return 0;
     }
 
-    public function sharePhone($chat_id){
-        $this->client->request('POST', self::TELEGRAM_URL . self::BOTID . '/sendMessage', [
+    public function sharePhone($message, $chat_id)
+    {
+        $response = $this->client->request('POST', self::TELEGRAM_URL . self::BOTID . '/sendMessage', [
             'json' => [
                 'chat_id' => $chat_id,
-                "text" => 'Share you contact phone?',
+                "text" => $message,
                 'reply_markup' => array(
                     'keyboard' => array(
                         array(
@@ -106,16 +116,35 @@ class TelegramService
             ]
         ]);
 
+        $body = $response->getBody()->getContents();
+        return json_decode($body);
     }
-    public function callbackCommand($command, $chat_id)
+    public function callbackCommand($inCommand, $message_plan_id, $writer)
     {
-        if ("\\" . self::COMMAND_REGISTER == $command) {
-            $this->sharePhone($chat_id);
-            // $this->sendMessage('Please enter fullname', $chat_id);
-            // $response = $this->client->request('POST', self::TELEGRAM_URL . self::BOTID . '/sendMessage', ['json' => $params]);
+        if ("/" . self::COMMAND_REGISTER == $inCommand) {
+            $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
+            $step = (empty($maxstep) ? 0 : $maxstep) + 1;
+            if ($step == 3) {
+                return;
+            }
+            $text = '';
+            $send_time = date('Y-m-d H:i:s');
+            $responce = null;
+            if ($step == 1) {
+                $text = 'Please enter fullname';
+                $responce = $this->sendMessage($text, $writer->chat_id);
+            }
+            if ($step == 2) {
+                $text = 'Share you contact phone?';
+                $responce = $this->sharePhone($text, $writer->chat_id);
+            }
+            $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $text, false);
+            $item->step = $step;
+            $item->saveSendTime($responce->result->message_id);
 
         }
     }
+
     public function setMyCommands()
     {
         $params = [

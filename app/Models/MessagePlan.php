@@ -12,6 +12,7 @@ class MessagePlan extends Model
     use SoftDeletes;
     const TYPE_ASK = 1;
     const TYPE_SYSTEM = 2;
+    const TYPE_BOT_ANSWER = 3;
     public static function newItem($text, $sendMinute, $type)
     {
         $item = new self();
