@@ -10,7 +10,7 @@ class MessageController extends Controller
 {
 
     public function makeSendings(){
-        // MessageSending::createSendings();
+        MessageSending::createSendings();
     }
 
     public function sendQuestion(){
