@@ -21,6 +21,7 @@ Route::get('/test','TelegramController@send');
 Route::get('/init','MessageController@makeInit');
 
 Route::post('/listener','TelegramController@listener');
+Route::get('/check','TelegramController@check');
 
 Route::get('/setcert','TelegramController@setCert');
 Route::get('/read','TelegramController@getIncomes');

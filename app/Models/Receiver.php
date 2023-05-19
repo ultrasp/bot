@@ -16,6 +16,7 @@ class Receiver extends Model
 
     const USER_TYPE_EMPLOYEE = 2;
     const USER_TYPE_GUEST = 0;
+    const USER_TYPE_GUEST_FILLED = 1;
     const USER_TYPE_BOT = 3;
 
     const BOT_USERNAME = 'UsHelperBot';
