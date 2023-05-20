@@ -124,7 +124,7 @@ class TelegramService
         if ("/" . self::COMMAND_REGISTER == $inCommand && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
-            if ($step == 3) {
+            if ($step == 4) {
                 return;
             }
             $text = '';
@@ -137,6 +137,10 @@ class TelegramService
             if ($step == 2) {
                 $text = 'Share you contact phone?';
                 $responce = $this->sharePhone($text, $writer->chat_id);
+            }
+            if ($step == 3) {
+                $text = 'Your sucessfully registered';
+                $responce = $this->sendMessage($text, $writer->chat_id);
             }
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $text, false);
             $item->step = $step;
