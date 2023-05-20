@@ -121,6 +121,12 @@ class TelegramService
     }
     public function callbackCommand($inCommand, $message_plan_id, $writer)
     {
+        if(in_array(substr($inCommand,1),self::getAllCommands())){
+            $send_time = date('Y-m-d H:i:s');
+            $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
+            $item->is_fake = 1;
+            $item->saveSendTime(0);
+        } 
         if ("/" . self::COMMAND_REGISTER == $inCommand && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
@@ -142,13 +148,11 @@ class TelegramService
                 $text = 'Your sucessfully registered';
                 $responce = $this->sendMessage($text, $writer->chat_id);
             }
-        }
-        if(in_array(substr($inCommand,1),self::getAllCommands())){
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $text, false);
             $item->step = $step;
             $item->is_fake = 1;
             $item->saveSendTime($responce->result->message_id);
-        } 
+        }
     }
 
     public function setMyCommands()
