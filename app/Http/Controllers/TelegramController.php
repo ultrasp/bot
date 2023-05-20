@@ -31,7 +31,7 @@ class TelegramController extends Controller
     public function check(){
         // $update = TelegramUpdate::where(['id' => 5])->first();
         // $data = $update->update_json;
-        $data = '{"update_id":319789625,"message":{"message_id":102,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684455575,"reply_to_message":{"message_id":101,"from":{"id":6128162329,"is_bot":true,"first_name":"us_helper_bot","username":"UsHelperBot"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684455538,"text":"Share you contact phone?"},"contact":{"phone_number":"+998903566021","first_name":"Umid","last_name":"Hamidov","user_id":2242981}}}';
+        $data = '{"update_id":319789677,"message":{"message_id":154,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684568282,"text":"\/come_time","entities":[{"offset":0,"length":10,"type":"bot_command"}]}}';
         // dd($data);
         $this->handleMessage($data);
     }
