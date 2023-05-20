@@ -32,4 +32,13 @@ class IncomeMessage extends Model
         $message->save();
         return $message;
     }
+
+    public static function getLatestIncomeByWorkerId($workerId)
+    {
+        return self::query()
+            ->where('writer_id', $workerId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
 }

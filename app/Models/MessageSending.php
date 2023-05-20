@@ -57,6 +57,7 @@ class MessageSending extends Model
         // echo $date;
         $sendings = self::where([
             'send_time' => null,
+            'is_fake' => 0
         ])
             // ->where('send_plan_time', $date)
             // ->whereRaw('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('+5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
@@ -76,7 +77,8 @@ class MessageSending extends Model
         }
     }
 
-    public function saveSendTime($api_message_id){
+    public function saveSendTime($api_message_id)
+    {
         $this->send_time = date('Y-m-d H:i:s');
         $this->telegram_message_id = $api_message_id;
         $this->save();

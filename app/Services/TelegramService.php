@@ -142,11 +142,13 @@ class TelegramService
                 $text = 'Your sucessfully registered';
                 $responce = $this->sendMessage($text, $writer->chat_id);
             }
+        }
+        if(in_array(substr($inCommand,1),self::getAllCommands())){
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $text, false);
             $item->step = $step;
+            $item->is_fake = 1;
             $item->saveSendTime($responce->result->message_id);
-
-        }
+        } 
     }
 
     public function setMyCommands()
