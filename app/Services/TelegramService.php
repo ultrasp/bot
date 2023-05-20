@@ -121,7 +121,7 @@ class TelegramService
     }
     public function callbackCommand($inCommand, $message_plan_id, $writer)
     {
-        if ("/" . self::COMMAND_REGISTER == $inCommand) {
+        if ("/" . self::COMMAND_REGISTER == $inCommand && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
             if ($step == 3) {
