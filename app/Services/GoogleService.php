@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MessagePlan;
+use App\Models\Setting;
 use Google_Client;
 use Google_Service_Sheets;
 use Google_Service_Sheets_ClearValuesRequest;
@@ -38,31 +39,9 @@ class GoogleService
 
     }
 
-    public function readValues()
-    {
-        $startColumn = 1;
+    public function readSheetValues($spreadSheetId,$readSheet){
         $response = $this->service->spreadsheets_values->get(self::SPREADSHEET_ID, self::readSheet);
-        $times = $response->getValues();
-
-        $templates = [];
-        foreach ($times as $key => $time) {
-            if ($key == 0)
-                continue;
-            $timeData = explode(':', $time[$startColumn]);
-            $minuteFromMidnight = $timeData[0] * 60 + $timeData[1];
-
-            $message = $time[$startColumn + 1];
-            if (!empty($message)) {
-                $templates[] = [
-                    'message' => $message,
-                    'time' => $minuteFromMidnight
-                ];
-
-            }
-        }
-        if (!empty($templates)) {
-            MessagePlan::saveTemplates($templates);
-        }
+        return $response->getValues();
     }
 
     public function writeValues($sheet, $rows)

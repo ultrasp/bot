@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\MessagePlan;
 use App\Models\MessageSending;
+use App\Models\Setting;
+use App\Services\GoogleService;
 use Illuminate\Console\Command;
 
 class SendMessages extends Command
@@ -38,13 +41,14 @@ class SendMessages extends Command
      */
     public function handle()
     {
-        echo date('Y-m-d H:i:s');
-        if( date( 'H') == 0 && date( 'i') == 0) {
+        $isChanged = MessagePlan::updatePlans();
+
+        $sendingTime = Setting::getItem(Setting::SENDING_CREATE_TIME);
+        if ((!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value))) != date('Y-m-d') || $isChanged) {
             MessageSending::createSendings();
         }
-        if(date( 'i') == 0){
-            $service = new GoogleService();
-            $service->readValues();
+        if(empty($sendingTime->param_value)){
+            $sendingTime->setVal(date('Y-m-d H:i:s'));
         }
         MessageSending::send();
     }

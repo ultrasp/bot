@@ -40,17 +40,20 @@ class Receiver extends Model
         $all =  self::get();
         $data = [
             [
-                'username', 'last_name','first_name','user_type','last_answer_time','message_cnt'
+                'id','username', 'last_name','first_name','user_type','last_answer_time','message_cnt','fullname','contact_phone'
             ]
         ];
         foreach ($all as $key => $user) {
             $data[] = [
+                $user->id,
                 $user->username,
                 $user->lastname ?? '',
                 $user->firstname ?? '',
                 $user->user_type,
                 $user->last_answer_time ? date('Y-m-d H:i:s',strtotime($user->last_answer_time)) : '',
-                $user->message_cnt
+                $user->message_cnt,
+                $user->fullname,
+                $user->contact_phone
             ];
         }
         $sheet = 'users';

@@ -25,7 +25,9 @@ class MessageSending extends Model
             foreach ($receivers as $receiver) {
                 foreach ($templates as $template) {
                     $send_time = date('Y-m-d H:i:s', strtotime('midnight +' . $template->send_minute . ' minutes'));
-                    $item = self::newItem($receiver->id, $template->id, $send_time, $template->template);
+                    if($send_time >= date('Y-m-d H:i:s')){
+                        $item = self::newItem($receiver->id, $template->id, $send_time, $template->template);
+                    }
                 }
             }
         }
@@ -63,7 +65,7 @@ class MessageSending extends Model
             // ->whereRaw('send_plan_time between "'.date('Y-m-d H:i:s',strtotime('+5 minutes')).'" and "'.date('Y-m-d H:i:s').'"')
             ->whereRaw('send_plan_time <=  "' . date('Y-m-d H:i:s') . '"')
             ->get();
-        var_dump($sendings);
+        // var_dump($sendings);
         $service = new TelegramService();
         foreach ($sendings as $sending) {
             if (!empty($sending->receiver)) {
@@ -89,6 +91,14 @@ class MessageSending extends Model
         return MessageSending::query()
             ->whereRaw('DATE(send_plan_time) = "' . $date . '"')
             ->get();
+    }
+
+    public static function removeUnsendedSendings($message_plan_id){
+        MessageSending::where([
+            'message_plan_id' => $message_plan_id,
+            'send_time' => null,
+            'is_fake' => 0
+        ])->delete();
     }
 
 }

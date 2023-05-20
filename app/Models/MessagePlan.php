@@ -41,12 +41,59 @@ class MessagePlan extends Model
                 self::newItem($template['message'], $template['time'], self::TYPE_ASK);
             }
         }
-        $removeTemplates = $allTemplates->filter(function ($dbTemplate) use ($notRemoveTemplates) {
-            return !in_array($dbTemplate->id, $notRemoveTemplates);
-        })->pluck('id')->toArray();
-        if (!empty($removeTemplates)) {
-            self::query()->whereIn('id', $removeTemplates)->delete();
+        foreach($allTemplates as $dbTemplate){
+            if(!in_array($dbTemplate->id, $notRemoveTemplates)){
+                $dbTemplate->delete();
+                MessageSending::removeUnsendedSendings($dbTemplate->id);
+            }
         }
+        // $removeTemplates = $allTemplates->filter(function ($dbTemplate) use ($notRemoveTemplates) {
+        //     return !in_array($dbTemplate->id, $notRemoveTemplates);
+        // })->pluck('id')->toArray();
+        // if (!empty($removeTemplates)) {
+        //     self::query()->whereIn('id', $removeTemplates)->delete();
+        // }
+    }
+
+
+    public static function updatePlans()
+    {
+        $gooleService = new GoogleService();
+        $times = $gooleService->readSheetValues(GoogleService::SPREADSHEET_ID, GoogleService::readSheet);
+
+        $setting = Setting::getItem(Setting::USER_LIST);
+
+        $encodeData = md5(serialize($times));
+
+        // dd($setting);
+        if ($setting->param_value == $encodeData) {
+            return 1;
+        } else {
+            $setting->param_value = $encodeData;
+            $setting->save();
+        }
+        // dd($times);
+        $templates = [];
+        $startColumn = 1;
+        foreach ($times as $key => $time) {
+            if ($key == 0 || empty($time[$startColumn]))
+                continue;
+            $timeData = explode(':', $time[$startColumn]);
+            $minuteFromMidnight = $timeData[0] * 60 + $timeData[1];
+
+            $message = $time[$startColumn + 1];
+            if (!empty($message)) {
+                $templates[] = [
+                    'message' => $message,
+                    'time' => $minuteFromMidnight
+                ];
+
+            }
+        }
+        if (!empty($templates)) {
+            MessagePlan::saveTemplates($templates);
+        }
+        return 0;
     }
 
     public static function getDailyInfo($date)
@@ -73,7 +120,7 @@ class MessagePlan extends Model
     {
         $commands = TelegramService::getAllCommands();
         foreach ($commands as $command) {
-            $dbommand = '/'.$command;
+            $dbommand = '/' . $command;
             $mplan = self::getSystemAsk($dbommand);
             if (empty($mplan)) {
                 self::newItem($dbommand, 0, self::TYPE_SYSTEM);
