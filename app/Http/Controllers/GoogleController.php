@@ -27,6 +27,7 @@ class GoogleController extends Controller
             $sendingTime->setVal(date('Y-m-d H:i:s'));
         }
         MessageSending::send();
+
     }
 
     public function addDailyData()
