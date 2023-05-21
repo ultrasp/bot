@@ -11,6 +11,7 @@ class Setting extends Model
 {
     const USER_LIST = 'user_list';
     const SENDING_CREATE_TIME = 'sending_create_time';
+    const MAKE_REPORT = 'make_report';
     public static function newItem($paramKey)
     {
         $item = new self();

@@ -6,6 +6,7 @@ use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
+use App\Models\Setting;
 use App\Models\TelegramUpdate;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
@@ -75,6 +76,8 @@ class TelegramController extends Controller
 
             if ($writer && $canStoreMessage) {
                 IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
+                $setting = Setting::getItem(Setting::MAKE_REPORT);
+                $setting->setVal(1);
                 // MessagePlan::writeToExcelDaily();
             }
 
