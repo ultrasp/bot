@@ -100,15 +100,22 @@ class TelegramController extends Controller
         //handle register
         if ($sending && $sending->message_plan->template == "/" . TelegramService::COMMAND_REGISTER) {
             $command = $sending->message_plan->template;
+            $isUpdated = false;
             if ($sending->step == 1 && property_exists($message->message->message, 'text')) {
                 $writer->fullname = $message->message->text;
                 $writer->save();
+                $isUpdated = true;
             }
             if ($sending->step == 2 && property_exists($message->message, 'contact')) {
                 $writer->contact_phone = $message->message->contact->phone_number;
                 // $writer->user_type ==  Receiver::USER_TYPE_GUEST_FILLED;
                 $writer->save();
+                $isUpdated = true;
             }
+            if($isUpdated){
+                Setting::saveParam(Setting::MAKE_USER_LIST, 1);
+            }
+
         }
         if ($message == "/" . TelegramService::COMMAND_REGISTER) {
             $command = $message;
