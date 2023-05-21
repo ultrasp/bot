@@ -206,7 +206,7 @@ class MessagePlan extends Model
             $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
             foreach ($plans as $plan) {
                 $row = [
-                    $plan->covertToString() . ' ' . $plan->template
+                    ($isBotCommand ? '' : $plan->covertToString()) . ' ' . $plan->template
                 ];
                 for ($i = 0; $i < $days; $i++) {
                     $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
