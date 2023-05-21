@@ -154,32 +154,32 @@ class MessagePlan extends Model
             [
                 $header
             ];
-        $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
-            return $item->message_plan_id . '_' . $item->receiver_id;
-        });
-        $receivers = Receiver::getEmployees();
-        foreach ($plans as $plan) {
-            foreach ($receivers as $receiver) {
-                $row = [
-                    $plan->covertToString(). $plan->template,
-                ];
-                $row[] = $receiver->lastname . ' ' . $receiver->firstname;
-                $sending = $sendings->get($plan->id . '_' . $receiver->id);
-                if (!empty($sending)) {
-                    // dd($sending);
-                    $row[] = $sending->answer_time ?? '';
-                    if (!empty($sending->telegram_message_id)) {
-                        $responces = IncomeMessage::where(['writer_id' => $receiver->id, 'sending_id' => $sending->id])->get();
-                        // dd($responces);
-                        foreach ($responces as $responce) {
-                            $row[] = $responce->message;
-                        }
-                    }
-                }
-                $data[] = array_values($row);
-            }
-        }
-        // dd($data);
+        // $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
+        //     return $item->message_plan_id . '_' . $item->receiver_id;
+        // });
+        // $receivers = Receiver::getEmployees();
+        // foreach ($plans as $plan) {
+        //     foreach ($receivers as $receiver) {
+        //         $row = [
+        //             $plan->covertToString(). $plan->template,
+        //         ];
+        //         $row[] = $receiver->lastname . ' ' . $receiver->firstname;
+        //         $sending = $sendings->get($plan->id . '_' . $receiver->id);
+        //         if (!empty($sending)) {
+        //             // dd($sending);
+        //             $row[] = $sending->answer_time ?? '';
+        //             if (!empty($sending->telegram_message_id)) {
+        //                 $responces = IncomeMessage::where(['writer_id' => $receiver->id, 'sending_id' => $sending->id])->get();
+        //                 // dd($responces);
+        //                 foreach ($responces as $responce) {
+        //                     $row[] = $responce->message;
+        //                 }
+        //             }
+        //         }
+        //         $data[] = array_values($row);
+        //     }
+        // }
+        // // dd($data);
         $service->deleteRows($newSheetName);
         $service->writeValues($newSheetName, array_values($data));
     }
