@@ -154,12 +154,23 @@ class MessagePlan extends Model
             [
                 $header
             ];
+        $receivers = Receiver::getEmployees();
+        $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
+            return date('Y-m-d', strtotime($item->send_plan_time)) . '_' . $item->message_plan_id . '_' . $item->receiver_id;
+        });
+        foreach ($receivers as $receiver) {
+            $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
+            foreach ($plans as $plan) {
+                $row = [
+                    $plan->covertToString() . $plan->template
+                ];
+            }
+            $data[] = $row;
+        }
         // $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
         //     return $item->message_plan_id . '_' . $item->receiver_id;
         // });
-        // $receivers = Receiver::getEmployees();
         // foreach ($plans as $plan) {
-        //     foreach ($receivers as $receiver) {
         //         $row = [
         //             $plan->covertToString(). $plan->template,
         //         ];
