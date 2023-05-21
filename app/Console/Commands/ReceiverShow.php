@@ -45,7 +45,7 @@ class ReceiverShow extends Command
         $isChanged = Receiver::readSheet();
         $setting = Setting::getItem(Setting::MAKE_USER_LIST);
         if(($setting->param_value == null && $setting->param_value == 1) || $isChanged){
-            MessagePlan::writeToSheet();
+            Receiver::writeToSheet();
             $setting->setVal(0);
         }
     }
