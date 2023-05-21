@@ -13,6 +13,8 @@ class MessagePlan extends Model
     use SoftDeletes;
     const TYPE_ASK = 1;
     const TYPE_SYSTEM = 2;
+
+    const TYPE_SYSTEM_CALLBACK = 4;
     const TYPE_BOT_ANSWER = 3;
 
     const CHASTOTA_DAILY = 1;
@@ -167,7 +169,7 @@ class MessagePlan extends Model
             $dbommand = '/' . $command;
             $mplan = self::getSystemAsk($dbommand);
             if (empty($mplan)) {
-                self::newItem($dbommand, 0, self::TYPE_SYSTEM);
+                self::newItem($dbommand, 0, $command == TelegramService::COMMAND_REGISTER ? self::TYPE_SYSTEM_CALLBACK : self::TYPE_SYSTEM);
             }
         }
     }
