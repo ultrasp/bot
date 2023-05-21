@@ -128,5 +128,6 @@ class Receiver extends Model
         $user->chat_id = $chatid;
         $user->user_type = $userType;
         $user->save();
+        return $user;
     }
 }
