@@ -50,7 +50,7 @@ class TelegramController extends Controller
             if ($message->message->chat->type == 'private' && !$message->message->from->is_bot) {
                 $writer = Receiver::storeData($message->message->chat);
                 $canStoreMessage = true;
-                Setting::saveParam(Setting::MAKE_USER_LIST,1)
+                Setting::saveParam(Setting::MAKE_USER_LIST,1);
                 // Receiver::writeToSheet();
             }
 

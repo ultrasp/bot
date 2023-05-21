@@ -135,6 +135,8 @@ class TelegramService
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
             if ($step == 4) {
+                $text = 'You are already registered';
+                $this->sendMessage($text, $writer->chat_id);
                 return;
             }
             $text = '';
