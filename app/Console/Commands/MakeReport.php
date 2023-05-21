@@ -46,5 +46,11 @@ class MakeReport extends Command
             MessagePlan::writeToExcelDaily();
             $setting->setVal(0);
         }
+
+        $setting = Setting::getItem(Setting::MAKE_SYSTEM_REPORT);
+        if($setting->param_value == null || $setting->param_value == 1){
+            MessagePlan::writeToExcelDaily(true);
+            $setting->setVal(0);
+        }
     }
 }

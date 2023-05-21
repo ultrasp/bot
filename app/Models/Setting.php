@@ -14,6 +14,8 @@ class Setting extends Model
     const MAKE_REPORT = 'make_report';
     const USER_LIST = 'user_list';
     const MAKE_USER_LIST = 'make_user_list';
+
+    const MAKE_SYSTEM_REPORT = 'make_system_report';
     public static function newItem($paramKey)
     {
         $item = new self();

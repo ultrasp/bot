@@ -137,10 +137,13 @@ class MessagePlan extends Model
             ->get();
     }
 
-    public static function getMonthlyInfo($date)
+    public static function getMonthlyInfo($date, $type = self::TYPE_ASK)
     {
+        if (empty($type)) {
+            $type = self::TYPE_ASK;
+        }
         return MessagePlan::withTrashed()
-            ->where(['type' => self::TYPE_ASK])
+            ->where(['type' => $type])
             ->whereRaw('(deleted_at is null or exists (select 1 from message_sendings s where s.message_plan_id = message_plans.id and send_time is not null and DATE(send_time) >= "' . date('Y-m-01', strtotime($date)) . '" and DATE(send_time) <= "' . date('Y-m-t', strtotime($date)) . '" ))')
             ->orderBy('send_minute')
             ->get();
@@ -169,15 +172,15 @@ class MessagePlan extends Model
         }
     }
 
-    public static function writeToExcelDaily()
+    public static function writeToExcelDaily($isBotCommand = false)
     {
         $service = new GoogleService();
         $selDate = date('Y-m-d');
 
-        $newSheetName = date('m.Y', strtotime($selDate));
+        $newSheetName = date('m.Y', strtotime($selDate)) . ' ' . ($isBotCommand ? '0' : '1');
         $service->checkExistSheet($newSheetName);
 
-        $plans = MessagePlan::getMonthlyInfo($selDate);
+        $plans = MessagePlan::getMonthlyInfo($selDate, $isBotCommand ? self::TYPE_SYSTEM : self::TYPE_ASK);
         $header = [''];
         $days = date('t', strtotime($selDate));
 
@@ -193,7 +196,7 @@ class MessagePlan extends Model
 
         $receivers = Receiver::getEmployees();
 
-        $sendings = MessageSending::getMonthlyInfo($selDate)->groupBy(function ($item) {
+        $sendings = MessageSending::getMonthlyInfo($selDate, $isBotCommand)->groupBy(function ($item) {
             return date('Y-m-d', strtotime($item->send_plan_time)) . '_' . $item->message_plan_id . '_' . $item->receiver_id;
         });
         // dd($sendings);
@@ -234,7 +237,7 @@ class MessagePlan extends Model
         if ($this->chastota == MessagePlan::CHASTOTA_WORK_DAYS && date('D') != 'Sun') {
             $canSend = true;
         }
-        if ($this->chastota == MessagePlan::CHASTOTA_RANGE_DAY && $this->start_at >= date('Y-m-d') && $this->end_at <= date('Y-m-d') ) {
+        if ($this->chastota == MessagePlan::CHASTOTA_RANGE_DAY && $this->start_at >= date('Y-m-d') && $this->end_at <= date('Y-m-d')) {
             $canSend = true;
         }
         return $canSend;

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
+use App\Models\Setting;
 use GuzzleHttp\Client;
 
 class TelegramService

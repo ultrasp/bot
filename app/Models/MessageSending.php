@@ -107,13 +107,13 @@ class MessageSending extends Model
             ->get();
     }
 
-    public static function getMonthlyInfo($date)
+    public static function getMonthlyInfo($date,$isBotCommand = false)
     {
         return MessageSending::query()
             ->with('incomes')
             ->whereRaw('DATE(send_plan_time) >= "' . date('Y-m-01',strtotime($date)) . '" and date(send_plan_time) <= "'.date('Y-m-t',strtotime($date)).'"')
             ->whereRaw('send_time is not null')
-            ->where(['is_fake' => 0])
+            ->where(['is_fake' => $isBotCommand ? 1 : 0 ])
             ->get();
     }
 

@@ -61,6 +61,7 @@ class TelegramController extends Controller
                 $messagePlanId = $service->getCommandPlanId($message->message->text);
                 $command = $message->message->text;
                 $isCommand = $messagePlanId > 0;
+                Setting::saveParam(Setting::MAKE_SYSTEM_REPORT, 1);
             }
             // dd($message->message->text);
             if (!empty($writer) && $messagePlanId == 0) {
