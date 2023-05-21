@@ -82,7 +82,7 @@ class MessagePlan extends Model
         $gooleService = new GoogleService();
         $times = $gooleService->readSheetValues(GoogleService::SPREADSHEET_ID, GoogleService::readSheet);
 
-        $setting = Setting::getItem(Setting::USER_LIST);
+        $setting = Setting::getItem(Setting::MESSAGE_LIST);
 
         $encodeData = md5(serialize($times));
 
