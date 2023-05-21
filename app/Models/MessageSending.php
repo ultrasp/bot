@@ -30,7 +30,7 @@ class MessageSending extends Model
             foreach ($receivers as $receiver) {
                 foreach ($templates as $template) {
                     $send_time = date('Y-m-d H:i:s', strtotime('midnight +' . $template->send_minute . ' minutes'));
-                    if($send_time >= date('Y-m-d H:i:s')){
+                    if($template->canSend() && $send_time >= date('Y-m-d H:i:s')){
                         $dbTemplate = self::where([
                             'receiver_id' => $receiver->id,
                             'message_plan_id' => $template->id,

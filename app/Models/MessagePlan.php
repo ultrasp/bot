@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\GoogleService;
 use App\Services\TelegramService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -13,13 +14,19 @@ class MessagePlan extends Model
     const TYPE_ASK = 1;
     const TYPE_SYSTEM = 2;
     const TYPE_BOT_ANSWER = 3;
-    public static function newItem($text, $sendMinute, $type)
+
+    const CHASTOTA_DAILY = 1;
+    const CHASTOTA_WORK_DAYS = 2;
+    const CHASTOTA_RANGE_DAY = 3;
+    public static function newItem($text, $sendMinute, $type, $chastota = 0)
     {
         $item = new self();
         $item->template = $text;
         $item->send_minute = $sendMinute;
         $item->type = $type;
+        $item->chastota = $chastota;
         $item->save();
+        return $item;
     }
 
     public static function getAllByType($type)
@@ -33,12 +40,26 @@ class MessagePlan extends Model
         $notRemoveTemplates = [];
         foreach ($templates as $template) {
             $savedDb = $allTemplates->first(function ($dbTemplate) use ($template) {
-                return $dbTemplate->template == $template['message'] && $dbTemplate->send_minute == $template['time'];
+                return $dbTemplate->template == $template['message']
+                    && $dbTemplate->send_minute == $template['time']
+                    && $dbTemplate->chastota == $template['chastota'];
+                // 'start_at' => $time[$startColumn + 3],
+                // 'end_at' => $time[$startColumn + 4],
+
             });
             if (!empty($savedDb)) {
                 $notRemoveTemplates[] = $savedDb->id;
             } else {
-                self::newItem($template['message'], $template['time'], self::TYPE_ASK);
+                try {
+                    $item = self::newItem($template['message'], $template['time'], self::TYPE_ASK, $template['chastota']);
+                    if ($item->chastota == self::CHASTOTA_RANGE_DAY) {
+                        $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
+                        $end = Carbon::createFromFormat('d.m.Y', $template['end_at']);
+                        $item->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+                    }
+                } catch (\Throwable $th) {
+
+                }
             }
         }
         foreach ($allTemplates as $dbTemplate) {
@@ -47,14 +68,14 @@ class MessagePlan extends Model
                 MessageSending::removeUnsendedSendings($dbTemplate->id);
             }
         }
-        // $removeTemplates = $allTemplates->filter(function ($dbTemplate) use ($notRemoveTemplates) {
-        //     return !in_array($dbTemplate->id, $notRemoveTemplates);
-        // })->pluck('id')->toArray();
-        // if (!empty($removeTemplates)) {
-        //     self::query()->whereIn('id', $removeTemplates)->delete();
-        // }
     }
 
+    public function setRange($startAt, $endAt)
+    {
+        $this->start_at = $startAt;
+        $this->end_at = $endAt;
+        $this->save();
+    }
 
     public static function updatePlans()
     {
@@ -75,6 +96,7 @@ class MessagePlan extends Model
         // dd($times);
         $templates = [];
         $startColumn = 1;
+        // dd($times);
         foreach ($times as $key => $time) {
             if ($key == 0 || empty($time[$startColumn]))
                 continue;
@@ -82,10 +104,20 @@ class MessagePlan extends Model
             $minuteFromMidnight = $timeData[0] * 60 + $timeData[1];
 
             $message = $time[$startColumn + 1];
-            if (!empty($message)) {
+            $chastota = $time[$startColumn + 2];
+            $hasSetDate = true;
+
+            if ($chastota == self::CHASTOTA_RANGE_DAY && (empty($time[$startColumn + 3]) || empty($time[$startColumn + 4]))) {
+                $hasSetDate = false;
+
+            }
+            if (!empty($message) && !empty($time[$startColumn + 2]) && $hasSetDate) {
                 $templates[] = [
                     'message' => $message,
-                    'time' => $minuteFromMidnight
+                    'time' => $minuteFromMidnight,
+                    'chastota' => $time[$startColumn + 2],
+                    'start_at' => $time[$startColumn + 3] ?? null,
+                    'end_at' => $time[$startColumn + 4] ?? null,
                 ];
 
             }
@@ -147,7 +179,7 @@ class MessagePlan extends Model
 
         $plans = MessagePlan::getMonthlyInfo($selDate);
         $header = [''];
-        $days = date('t',strtotime($selDate));
+        $days = date('t', strtotime($selDate));
 
         for ($i = 0; $i < $days; $i++) {
             $day = date('d.m.Y', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
@@ -173,14 +205,14 @@ class MessagePlan extends Model
                 ];
                 for ($i = 0; $i < $days; $i++) {
                     $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
-                    $key = $day.'_'.$plan->id.'_'.$receiver->id;
+                    $key = $day . '_' . $plan->id . '_' . $receiver->id;
                     $daySendings = $sendings->get($key);
                     $messageText = '';
-                    if($daySendings){
+                    if ($daySendings) {
                         foreach ($daySendings as $key => $sendingItem) {
-                            foreach($sendingItem->incomes as $income){
+                            foreach ($sendingItem->incomes as $income) {
                                 // dd($income);
-                                $messageText .= $income->message."\r ";
+                                $messageText .= $income->message . "\r ";
                             }
                         }
                     }
@@ -189,32 +221,22 @@ class MessagePlan extends Model
                 $data[] = $row;
             }
         }
-        // dd($data);
-        // $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
-        //     return $item->message_plan_id . '_' . $item->receiver_id;
-        // });
-        // foreach ($plans as $plan) {
-        //         $row = [
-        //             $plan->covertToString(). $plan->template,
-        //         ];
-        //         $row[] = $receiver->lastname . ' ' . $receiver->firstname;
-        //         $sending = $sendings->get($plan->id . '_' . $receiver->id);
-        //         if (!empty($sending)) {
-        //             // dd($sending);
-        //             $row[] = $sending->answer_time ?? '';
-        //             if (!empty($sending->telegram_message_id)) {
-        //                 $responces = IncomeMessage::where(['writer_id' => $receiver->id, 'sending_id' => $sending->id])->get();
-        //                 // dd($responces);
-        //                 foreach ($responces as $responce) {
-        //                     $row[] = $responce->message;
-        //                 }
-        //             }
-        //         }
-        //         $data[] = array_values($row);
-        //     }
-        // }
-        // // dd($data);
         $service->deleteRows($newSheetName);
         $service->writeValues($newSheetName, array_values($data));
+    }
+
+    public function canSend()
+    {
+        $canSend = false;
+        if ($this->chastota == MessagePlan::CHASTOTA_DAILY) {
+            $canSend = true;
+        }
+        if ($this->chastota == MessagePlan::CHASTOTA_WORK_DAYS && date('D') != 'Sun') {
+            $canSend = true;
+        }
+        if ($this->chastota == MessagePlan::CHASTOTA_RANGE_DAY && $this->start_at >= date('Y-m-d') && $this->end_at <= date('Y-m-d') ) {
+            $canSend = true;
+        }
+        return $canSend;
     }
 }
