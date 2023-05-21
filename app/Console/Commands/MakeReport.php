@@ -42,7 +42,7 @@ class MakeReport extends Command
     public function handle()
     {
         $setting = Setting::getItem(Setting::MAKE_REPORT);
-        if($setting->param_value == null && $setting->param_value == 1){
+        if($setting->param_value == null || $setting->param_value == 1){
             MessagePlan::writeToExcelDaily();
             $setting->setVal(0);
         }
