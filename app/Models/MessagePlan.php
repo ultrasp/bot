@@ -109,7 +109,7 @@ class MessagePlan extends Model
     {
         return MessagePlan::withTrashed()
             ->where(['type' => self::TYPE_ASK])
-            ->whereRaw('exists (select 1 from message_sendings s where s.message_plan_id = message_plans.id and send_time is not null and DATE(send_time) >= "' . date('Y-m-01', strtotime($date)) . '" and DATE(send_time) <= "' . date('Y-m-t', strtotime($date)) . '" )')
+            ->whereRaw('(deleted_at is null or exists (select 1 from message_sendings s where s.message_plan_id = message_plans.id and send_time is not null and DATE(send_time) >= "' . date('Y-m-01', strtotime($date)) . '" and DATE(send_time) <= "' . date('Y-m-t', strtotime($date)) . '" ))')
             ->orderBy('send_minute')
             ->get();
     }
@@ -142,7 +142,7 @@ class MessagePlan extends Model
         $service = new GoogleService();
         $selDate = date('Y-m-d');
 
-        $newSheetName = date('d.m.Y', strtotime($selDate)) . ' data';
+        $newSheetName = date('m.Y', strtotime($selDate));
         $service->checkExistSheet($newSheetName);
 
         $plans = MessagePlan::getMonthlyInfo($selDate);
@@ -164,7 +164,7 @@ class MessagePlan extends Model
         $sendings = MessageSending::getMonthlyInfo($selDate)->groupBy(function ($item) {
             return date('Y-m-d', strtotime($item->send_plan_time)) . '_' . $item->message_plan_id . '_' . $item->receiver_id;
         });
-
+        // dd($sendings);
         foreach ($receivers as $receiver) {
             $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
             foreach ($plans as $plan) {
@@ -172,24 +172,24 @@ class MessagePlan extends Model
                     $plan->covertToString() . ' ' . $plan->template
                 ];
                 for ($i = 0; $i < $days; $i++) {
-                    $day = date('d.m.Y', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
+                    $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
                     $key = $day.'_'.$plan->id.'_'.$receiver->id;
                     $daySendings = $sendings->get($key);
                     $messageText = '';
                     if($daySendings){
                         foreach ($daySendings as $key => $sendingItem) {
                             foreach($sendingItem->incomes as $income){
-                                $messageText .= $income->message;
+                                // dd($income);
+                                $messageText .= $income->message."\r ";
                             }
                         }
                     }
                     $row[] = $messageText;
                 }
-        
                 $data[] = $row;
             }
         }
-        dd($data);
+        // dd($data);
         // $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
         //     return $item->message_plan_id . '_' . $item->receiver_id;
         // });
