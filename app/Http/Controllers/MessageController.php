@@ -31,6 +31,6 @@ class MessageController extends Controller
 
     public function makeInit(){
         MessagePlan::makeSystemAsk();
-        Receiver::storeBots();
+        // Receiver::storeBots();
     }
 }
