@@ -51,6 +51,7 @@ class TelegramController extends Controller
                 $writer = Receiver::storeData($message->message->chat);
                 $canStoreMessage = true;
                 Setting::saveParam(Setting::MAKE_USER_LIST,1);
+                Setting::saveParam(Setting::SENDING_CREATE_TIME,null);
                 // Receiver::writeToSheet();
             }
 
@@ -77,8 +78,7 @@ class TelegramController extends Controller
 
             if ($writer && $canStoreMessage) {
                 IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
-                $setting = Setting::getItem(Setting::MAKE_REPORT);
-                $setting->setVal(1);
+                Setting::saveParam(Setting::MAKE_REPORT,1);
                 // MessagePlan::writeToExcelDaily();
             }
 

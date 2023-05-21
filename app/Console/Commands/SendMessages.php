@@ -45,7 +45,7 @@ class SendMessages extends Command
 
         $sendingTime = Setting::getItem(Setting::SENDING_CREATE_TIME);
         $isSendingsUpdated = false;
-        if ((!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value))) != date('Y-m-d') || $isChanged) {
+        if ($sendingTime->param_value == null || (!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value)) != date('Y-m-d')) || $isChanged) {
             MessageSending::createSendings();
             $isSendingsUpdated = true;
         }
