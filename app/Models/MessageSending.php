@@ -64,7 +64,7 @@ class MessageSending extends Model
         return self::whereNotNull('send_time')
             ->where('receiver_id', $workerId)
             ->where('telegram_message_id', '!=', '0')
-            ->orderBy('send_time', 'desc')
+            ->orderByRaw('send_time desc, id desc')
             ->first();
     }
     public static function send()
