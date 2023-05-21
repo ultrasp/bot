@@ -107,7 +107,7 @@ class MessageSending extends Model
         return MessageSending::query()
             ->whereRaw('DATE(send_plan_time) >= "' . date('Y-m-01',strtotime($date)) . '" and date(send_plan_time) <= "'.date('Y-m-t',strtotime($date)).'"')
             ->whereRaw('send_time is not null')
-            ->where(['fake' => 0])
+            ->where(['is_fake' => 0])
             ->get();
     }
 
