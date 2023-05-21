@@ -41,8 +41,8 @@ class MessagePlan extends Model
                 self::newItem($template['message'], $template['time'], self::TYPE_ASK);
             }
         }
-        foreach($allTemplates as $dbTemplate){
-            if(!in_array($dbTemplate->id, $notRemoveTemplates)){
+        foreach ($allTemplates as $dbTemplate) {
+            if (!in_array($dbTemplate->id, $notRemoveTemplates)) {
                 $dbTemplate->delete();
                 MessageSending::removeUnsendedSendings($dbTemplate->id);
             }
@@ -105,6 +105,15 @@ class MessagePlan extends Model
             ->get();
     }
 
+    public static function getMonthlyInfo($date)
+    {
+        return MessagePlan::withTrashed()
+            ->where(['type' => self::TYPE_ASK])
+            ->whereRaw('(deleted_at is null or (deleted_at is not null and exists (select 1 from message_sendings s where s.message_plan_id = message_plans.id and send_time is not null and DATE(send_time) >= "' . date('Y-m-01', strtotime($date)) . '" and DATE(send_time) <= "' . date('Y-m-t', strtotime($date)) . '" )))')
+            ->orderBy('send_minute')
+            ->get();
+    }
+
     public function covertToString()
     {
         $hour = intval($this->send_minute / 60);
@@ -134,31 +143,25 @@ class MessagePlan extends Model
         $newSheetName = date('d.m.Y') . ' data';
         $service->checkExistSheet($newSheetName);
 
-        $plans = MessagePlan::getDailyInfo(date('Y-m-d'));
+        $plans = MessagePlan::getMonthlyInfo(date('Y-m-d'));
+        $header = [''];
+        $days = date('t');
+        for ($i = 1; $i <= $days; $i++) {
+            $day = date('Y-m-d', strtotime(date('Y-m-01') . ' +' . $i . 'days'));
+            $header[] = $day;
+        }
         $data =
             [
-                [
-                    'time',
-                    'ask',
-                    'student',
-                    'answer_time',
-                    'answer',
-                ]
+                $header
             ];
-        $sendings = MessageSending::getDailyInfo(date('Y-m-d'))->keyBy(function ($item) {
+        $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
             return $item->message_plan_id . '_' . $item->receiver_id;
         });
         $receivers = Receiver::getEmployees();
-        // dd($sendings);
-        // $data = [];
         foreach ($plans as $plan) {
-            // dd($plan->covertToString());
-            // $data[$plan->id] = [
-            // ];
             foreach ($receivers as $receiver) {
                 $row = [
-                    $plan->covertToString(),
-                    $plan->template,
+                    $plan->covertToString(). $plan->template,
                 ];
                 $row[] = $receiver->lastname . ' ' . $receiver->firstname;
                 $sending = $sendings->get($plan->id . '_' . $receiver->id);

@@ -47,7 +47,7 @@ class SendMessages extends Command
         if ((!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value))) != date('Y-m-d') || $isChanged) {
             MessageSending::createSendings();
         }
-        if(empty($sendingTime->param_value)){
+        if (empty($sendingTime->param_value)) {
             $sendingTime->setVal(date('Y-m-d H:i:s'));
         }
         MessageSending::send();

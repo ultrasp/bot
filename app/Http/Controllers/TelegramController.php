@@ -75,7 +75,7 @@ class TelegramController extends Controller
 
             if ($writer && $canStoreMessage) {
                 IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
-                MessagePlan::writeToExcelDaily();
+                // MessagePlan::writeToExcelDaily();
             }
 
             if ($isCommand) {
