@@ -146,8 +146,8 @@ class MessagePlan extends Model
         $plans = MessagePlan::getMonthlyInfo(date('Y-m-d'));
         $header = [''];
         $days = date('t');
-        for ($i = 1; $i <= $days; $i++) {
-            $day = date('Y-m-d', strtotime(date('Y-m-01') . ' +' . $i . 'days'));
+        for ($i = 0; $i < $days; $i++) {
+            $day = date('d.m.Y', strtotime(date('Y-m-01') . ' +' . $i . 'days'));
             $header[] = $day;
         }
         $data =
