@@ -12,6 +12,8 @@ class Setting extends Model
     const MESSAGE_LIST = 'message_list';
     const SENDING_CREATE_TIME = 'sending_create_time';
     const MAKE_REPORT = 'make_report';
+    const USER_LIST = 'user_list';
+    const MAKE_USER_LIST = 'make_user_list';
     public static function newItem($paramKey)
     {
         $item = new self();

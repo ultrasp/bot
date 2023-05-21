@@ -88,7 +88,7 @@ class MessagePlan extends Model
 
         // dd($setting);
         if ($setting->param_value == $encodeData) {
-            return 1;
+            return 0;
         } else {
             $setting->param_value = $encodeData;
             $setting->save();
@@ -125,7 +125,7 @@ class MessagePlan extends Model
         if (!empty($templates)) {
             MessagePlan::saveTemplates($templates);
         }
-        return 0;
+        return 1;
     }
 
     public static function getDailyInfo($date)
