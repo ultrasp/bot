@@ -17,6 +17,11 @@ class MessageSending extends Model
         return $this->belongsTo(MessagePlan::class);
     }
 
+    public function incomes()
+    {
+        return $this->hasMany(IncomeMessage::class);
+    }
+
     public static function createSendings()
     {
         $receivers = Receiver::getEmployees();
