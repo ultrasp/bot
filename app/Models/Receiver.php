@@ -97,7 +97,7 @@ class Receiver extends Model
                 continue;
             }
             $user = self::getByUsername($row[0]);
-            if (empty($user))
+            if (empty($user->id))
                 continue;
             $user->user_type = $row[$userTypeColNumber];
             $user->save();
