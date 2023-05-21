@@ -122,10 +122,17 @@ class TelegramService
     public function callbackCommand($inCommand, $message_plan_id, $writer)
     {
         // dd(in_array(substr($inCommand,1),self::getAllCommands()));
+        // $calbackCommands = [
+        //     self::COMMAND_REGISTER
+        // ];
+
         if(in_array(substr($inCommand,1),self::getAllCommands())){
             $send_time = date('Y-m-d H:i:s');
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
             $item->is_fake = 1;
+            if("/". self::COMMAND_REGISTER == $inCommand){
+                $item->answer_time = $send_time;
+            }
             // dd($item);
             $item->saveSendTime(-1);
             // dd($item);
