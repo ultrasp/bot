@@ -26,7 +26,16 @@ class MessageSending extends Model
                 foreach ($templates as $template) {
                     $send_time = date('Y-m-d H:i:s', strtotime('midnight +' . $template->send_minute . ' minutes'));
                     if($send_time >= date('Y-m-d H:i:s')){
-                        $item = self::newItem($receiver->id, $template->id, $send_time, $template->template);
+                        $dbTemplate = self::where([
+                            'receiver_id' => $receiver->id,
+                            'message_plan_id' => $template->id,
+                            'is_fake' => 0,
+                            'send_plan_time' => $send_time
+                        ])
+                        ->first();
+                        if(empty($dbTemplate)){
+                            $item = self::newItem($receiver->id, $template->id, $send_time, $template->template);
+                        }
                     }
                 }
             }
