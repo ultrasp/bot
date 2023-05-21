@@ -77,7 +77,7 @@ class Receiver extends Model
     {
         $gooleService = new GoogleService();
         $users = $gooleService->readSheetValues(GoogleService::SPREADSHEET_ID, GoogleService::usersSheet);
-        dd($users);
+        // dd($users);
 
         $setting = Setting::getItem(Setting::USER_LIST);
 

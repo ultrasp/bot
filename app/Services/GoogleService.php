@@ -40,7 +40,7 @@ class GoogleService
     }
 
     public function readSheetValues($spreadSheetId,$readSheet){
-        $response = $this->service->spreadsheets_values->get(self::SPREADSHEET_ID, self::readSheet);
+        $response = $this->service->spreadsheets_values->get($spreadSheetId, $readSheet);
         return $response->getValues();
     }
 
