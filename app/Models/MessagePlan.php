@@ -189,6 +189,7 @@ class MessagePlan extends Model
                 $data[] = $row;
             }
         }
+        dd($data);
         // $sendings = MessageSending::getMonthlyInfo(date('Y-m-d'))->keyBy(function ($item) {
         //     return $item->message_plan_id . '_' . $item->receiver_id;
         // });
