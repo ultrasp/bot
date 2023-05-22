@@ -85,7 +85,13 @@ class TelegramController extends Controller
                 Setting::saveParam(Setting::MAKE_REPORT, 1);
             }
 
-            if ($isCommand || in_array(substr($command, 1), TelegramService::getManagerBotAsks())) {
+            if (in_array(substr($message->message->text, 1), TelegramService::getManagerBotAsks())) {
+                $isCommand = true;
+                $command = $message->message->text;
+            }
+            // dd($message->message->text);
+            if ($isCommand) {
+
                 $service->callbackCommand($command, $messagePlanId, $writer);
             }
         } catch (\Throwable $th) {
