@@ -159,7 +159,7 @@ class MessagePlan extends Model
 
     public static function getSystemAsk($command)
     {
-        return self::where(['template' => $command, 'type' => self::TYPE_SYSTEM])->first();
+        return self::where(['template' => $command])->whereIn('type' , [self::TYPE_SYSTEM, self::TYPE_SYSTEM_CALLBACK] )->first();
     }
 
     public static function makeSystemAsk()
