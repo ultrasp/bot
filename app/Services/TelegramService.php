@@ -147,7 +147,7 @@ class TelegramService
         $body = $response->getBody()->getContents();
         return json_decode($body);
     }
-    public function callbackCommand($inCommand, $message_plan_id, $writer)
+    public function callbackCommand($inCommand, $message_plan_id, $writer, $messageChatId)
     {
         $commandText = substr($inCommand, 1);
         // dd(in_array(substr($inCommand,1),self::getAllCommands()));
@@ -189,7 +189,7 @@ class TelegramService
             $item->saveSendTime($responce->result->message_id);
         }
 
-        if (in_array($commandText, self::getManagerBotAsks())) {
+        if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == '-1001524098666') {
 
             if ($commandText == self::COMMAND_OFFICE_ON) {
                 $mp = MessagePlan::where(['template' => "/" . self::COMMAND_COME_TIME])->first();

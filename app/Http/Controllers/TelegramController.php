@@ -91,8 +91,7 @@ class TelegramController extends Controller
             }
             // dd($message->message->text);
             if ($isCommand) {
-
-                $service->callbackCommand($command, $messagePlanId, $writer);
+                $service->callbackCommand($command, $messagePlanId, $writer, $message->message->chat->id);
             }
         } catch (\Throwable $th) {
             //throw $th;
