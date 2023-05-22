@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Setting;
@@ -62,6 +63,21 @@ class TelegramService
     const COMMAND_LEAVE_WORK = 'leave_work';
     const COMMAND_LATE_REASON = 'late_reason';
     const COMMAND_WORK_PLAN = 'work_plan';
+
+    const COMMAND_OFFICE_ON = 'officeon';
+    const COMMAND_OFFICE_OFF = 'officeoff';
+    const COMMAND_WORK_LIST = 'worklist';
+    const COMMAND_REASON = 'reason';
+
+    public static function getManagerBotAsks()
+    {
+        return [
+            self::COMMAND_OFFICE_ON,
+            self::COMMAND_OFFICE_OFF,
+            self::COMMAND_WORK_LIST,
+            self::COMMAND_REASON
+        ];
+    }
 
     public static function getAllCommands()
     {
@@ -133,8 +149,9 @@ class TelegramService
     }
     public function callbackCommand($inCommand, $message_plan_id, $writer)
     {
+        $commandText = substr($inCommand, 1);
         // dd(in_array(substr($inCommand,1),self::getAllCommands()));
-        if(in_array(substr($inCommand,1),self::getSystemBotAsks())){
+        if (in_array($commandText, self::getSystemBotAsks())) {
             $send_time = date('Y-m-d H:i:s');
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
             $item->is_fake = 1;
@@ -143,7 +160,7 @@ class TelegramService
             // dd($item);
         }
         // dd('aa');
-        if ("/" . self::COMMAND_REGISTER == $inCommand && $message_plan_id > 0) {
+        if (self::COMMAND_REGISTER == $commandText && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
             if ($step == 4) {
@@ -170,6 +187,25 @@ class TelegramService
             $item->step = $step;
             $item->is_fake = 1;
             $item->saveSendTime($responce->result->message_id);
+        }
+
+        if (in_array($commandText, self::getManagerBotAsks())) {
+
+            if ($commandText == self::COMMAND_OFFICE_ON) {
+                $mp = MessagePlan::where(['template' => "/" . self::COMMAND_COME_TIME])->first();
+                if (!empty($mp)) {
+                    $result = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0')->get();
+                    $messageText = [];
+                    foreach ($result as $key => $message) {
+                        $messageText[$message->writer_id] = $message->receiver->username . ' ' . $message->receiver->fullname;
+                    }
+                    if (!empty($messageText)) {
+                        $incomers = implode("\n", $messageText);
+                        $responce = $this->sendMessage($incomers, $writer->chat_id);
+                    }
+                }
+            }
+
         }
     }
 

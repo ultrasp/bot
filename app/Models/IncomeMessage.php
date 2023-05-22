@@ -8,17 +8,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class IncomeMessage extends Model
 {
     use SoftDeletes;
+    public function receiver()
+    {
+        return $this->belongsTo(Receiver::class, 'writer_id');
+    }
+
     public static function storeData($messageData, $writer_id, $sending_id, $messagePlanId, $type = 0)
     {
         $message = null;
 
-        if(property_exists($messageData->message,'text')){
+        if (property_exists($messageData->message, 'text')) {
             $messageText = $messageData->message->text;
         }
-        if(property_exists($messageData->message,'contact')){
+        if (property_exists($messageData->message, 'contact')) {
             $messageText = $messageData->message->contact->phone_number;
         }
-        if(empty($messageText)){
+        if (empty($messageText)) {
             return;
         }
         $message = new self();
