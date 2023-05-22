@@ -84,8 +84,8 @@ class TelegramController extends Controller
                 IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
                 Setting::saveParam(Setting::MAKE_REPORT, 1);
             }
-            // dd($command);
-            if ($isCommand) {
+
+            if ($isCommand || in_array(substr($command, 1), TelegramService::getManagerBotAsks())) {
                 $service->callbackCommand($command, $messagePlanId, $writer);
             }
         } catch (\Throwable $th) {
