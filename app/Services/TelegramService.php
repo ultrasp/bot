@@ -69,6 +69,7 @@ class TelegramService
     const COMMAND_WORK_LIST = 'worklist';
     const COMMAND_REASON = 'reason';
 
+    const MANAGER_GROUP_ID = '-1001524098666';
     public static function getManagerBotAsks()
     {
         return [
@@ -189,7 +190,7 @@ class TelegramService
             $item->saveSendTime($responce->result->message_id);
         }
 
-        if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == '-1001524098666') {
+        if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == self::MANAGER_GROUP_ID) {
 
             if ($commandText == self::COMMAND_OFFICE_ON) {
                 $mp = MessagePlan::where(['template' => "/" . self::COMMAND_COME_TIME])->first();
@@ -201,7 +202,7 @@ class TelegramService
                     }
                     if (!empty($messageText)) {
                         $incomers = implode("\n", $messageText);
-                        $responce = $this->sendMessage($incomers, $writer->chat_id);
+                        $responce = $this->sendMessage($incomers, self::MANAGER_GROUP_ID);
                     }
                 }
             }

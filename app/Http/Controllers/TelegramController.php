@@ -85,7 +85,7 @@ class TelegramController extends Controller
                 Setting::saveParam(Setting::MAKE_REPORT, 1);
             }
 
-            if (in_array(substr($message->message->text, 1), TelegramService::getManagerBotAsks())) {
+            if (in_array(substr($message->message->text, 1), TelegramService::getManagerBotAsks()) &&  $message->message->chat->id == TelegramService::MANAGER_GROUP_ID) {
                 $isCommand = true;
                 $command = $message->message->text;
             }
