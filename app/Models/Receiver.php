@@ -30,7 +30,7 @@ class Receiver extends Model
     {
         $user = self::getByUsername($chatData->username);
         if (empty($user->id)) {
-            $user = self::newItem($chatData->username, $chatData->last_name, $chatData->first_name, $chatData->id, $userType);
+            $user = self::newItem($chatData->username, property_exists($chatData,'last_name') ? $chatData->last_name : null, $chatData->first_name, $chatData->id, $userType);
         }
         $user->last_answer_time = date('Y-m-d H:i:s');
         $user->message_cnt += 1;
