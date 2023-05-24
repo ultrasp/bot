@@ -124,9 +124,9 @@ class MessagePlan extends Model
 
             }
         }
-        if (!empty($templates)) {
+        // if (!empty($templates)) {
             MessagePlan::saveTemplates($templates);
-        }
+        // }
         return 1;
     }
 
