@@ -43,7 +43,9 @@ class TelegramController extends Controller
         try {
             $message = json_decode($data);
             $service = new TelegramService();
-
+            if(!property_exists($message,'message')){
+                return;
+            }
             $canStoreMessage = false;
             $writer = null;
             $messagePlanId = 0;
