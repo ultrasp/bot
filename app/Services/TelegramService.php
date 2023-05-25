@@ -280,10 +280,11 @@ class TelegramService
                     $mesageData = implode("\n", $messageText);
                     // dd($incomers);
                 } else {
-                    $receivers = Receiver::get()->keyBy('id');
+                    $receivers = Receiver::getEmployees()->keyBy('id');
+                    // dd($receivers);
                     foreach ($receivers as $key => $receiver) {
-                        if (!isset($messageText[$receivers->id])) {
-                            $absents[$message->writer_id] = '@' . $receiver->username . ' ' . $receiver->fullname;
+                        if (!isset($messageText[$receiver->id])) {
+                            $absents[$receiver->id] = '@' . $receiver->username . ' ' . $receiver->fullname;
 
                         }
                     }
