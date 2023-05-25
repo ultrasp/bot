@@ -114,8 +114,15 @@ class TelegramController extends Controller
                 $writer->save();
                 $isUpdated = true;
             }
-            if ($sending->step == 2 && property_exists($message->message, 'contact')) {
-                $writer->contact_phone = $message->message->contact->phone_number;
+            $phone ='';
+            if(property_exists($message->message, 'text')){
+                $phone = $message->message->text;
+            }
+            if(property_exists($message->message, 'contact')){
+                $phone = $message->message->contact->phone_number;
+            }
+            if ($sending->step == 2) {
+                $writer->contact_phone = $phone;
                 // $writer->user_type ==  Receiver::USER_TYPE_GUEST_FILLED;
                 $writer->save();
                 $isUpdated = true;
