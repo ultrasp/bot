@@ -53,25 +53,24 @@ class TelegramController extends Controller
     public function mlistener(Request $request)
     {
         $data = json_encode($request->all());
-        // TelegramUpdate::storeData($data);
+        TelegramUpdate::storeData($data);
         $this->handleManagerMessage($data);
 
     }
 
-    public function handleManagerMessage($data)
+    public function handleManagerMessage($data = null)
     {
-        // try {
-            // $data = '{"update_id":736985814,
-            //     "message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"/officeon","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
+        try {
+            // $data = '{"update_id":736985814,"message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":-1001524098666,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"\/officeon","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
             $message = json_decode($data);
             $service = new TelegramService();
             // dd($message);
             if (property_exists($message, 'message')) {
                 $service->managerRequestHandle($message->message->text, $message->message->chat->id);
             }
-        // } catch (\Throwable $th) {
-        //     //throw $th;
-        // }
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
 
 
     }
