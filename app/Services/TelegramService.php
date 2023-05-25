@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
+use App\Models\Receiver;
 use App\Models\Setting;
 use GuzzleHttp\Client;
 
@@ -14,15 +15,21 @@ class TelegramService
     private $client;
 
     const URL_LISTENER = 'https://bot.lets.uz/listener';
+    const URL_MANAGER_LISTENER = 'https://bot.lets.uz/mlistener';
 
     const BOTID = '6128162329:AAHdm_brrZ7E10Svm-BMfDweXXrVKVNTyqI';
+
+    const MANAGER_BOT_ID = '6027276819:AAFOkVYWxQmxNHIJnRbM1Yw6EvLo9FNaPWM';
 
     const TELEGRAM_URL = 'https://api.telegram.org/bot';
 
     public function __construct()
     {
         $this->client = new Client();
+        $this->sendBotId = self::BOTID;
     }
+
+    public $sendBotId;
 
     public function setCert()
     {
@@ -32,7 +39,15 @@ class TelegramService
             ]
         ]);
         $body = $response->getBody()->getContents();
-        var_dump($body);
+
+
+        $response = $this->client->request('POST', self::TELEGRAM_URL . self::MANAGER_BOT_ID . '/setWebhook', [
+            'json' => [
+                'url' => self::URL_MANAGER_LISTENER,
+            ]
+        ]);
+        // $body = $response->getBody()->getContents();
+        // var_dump($body);
     }
 
     public function deleteWebhook()
@@ -42,7 +57,7 @@ class TelegramService
         var_dump($body);
     }
 
-    public function sendMessage($message, $chat_id, $reply_to_message_id = null)
+    public function sendMessage($message, $chat_id, $keyboard = [], $reply_to_message_id = null)
     {
         $params = [
             'chat_id' => $chat_id,
@@ -51,7 +66,14 @@ class TelegramService
         if (!empty($reply_to_message_id)) {
             $params['reply_to_message_id'] = $reply_to_message_id;
         }
-        $response = $this->client->request('POST', self::TELEGRAM_URL . self::BOTID . '/sendMessage', ['json' => $params]);
+        if (!empty($keyboard)) {
+            $params['reply_markup'] = [
+                'keyboard' => $keyboard,
+                'one_time_keyboard' => false,
+                'resize_keyboard' => true
+            ];
+        }
+        $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/sendMessage', ['json' => $params]);
 
         $body = $response->getBody()->getContents();
         // var_dump($body);
@@ -190,26 +212,94 @@ class TelegramService
             $item->saveSendTime($responce->result->message_id);
         }
 
-        if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == self::MANAGER_GROUP_ID) {
-
-            if ($commandText == self::COMMAND_OFFICE_ON) {
-                $mp = MessagePlan::where(['template' => "/" . self::COMMAND_COME_TIME])->first();
-                if (!empty($mp)) {
-                    $result = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0')->get();
-                    $messageText = [];
-                    foreach ($result as $key => $message) {
-                        $messageText[$message->writer_id] = $message->receiver->username . ' ' . $message->receiver->fullname;
-                    }
-                    if (!empty($messageText)) {
-                        $incomers = implode("\n", $messageText);
-                        $responce = $this->sendMessage($incomers, self::MANAGER_GROUP_ID);
-                    }
-                }
-            }
-
-        }
     }
 
+    public function getManagerKeyboard()
+    {
+        return [
+            [
+                [
+                    "text" => "/" . self::COMMAND_OFFICE_ON,
+                    "callback_data" => "/" . self::COMMAND_OFFICE_ON
+                ],
+                [
+                    "text" => "/" . self::COMMAND_OFFICE_OFF,
+                    "callback_data" => "/" . self::COMMAND_OFFICE_OFF
+                ],
+                [
+                    "text" => "/" . self::COMMAND_WORK_LIST,
+                    "callback_data" => "/" . self::COMMAND_WORK_LIST
+                ],
+                [
+                    "text" => "/" . self::COMMAND_REASON,
+                    "callback_data" => "/" . self::COMMAND_REASON
+                ]
+            ]
+        ];
+    }
+
+    public function managerRequestHandle($inCommand, $messageChatId)
+    {
+        $commandText = substr($inCommand, 1);
+        $keyboard = $this->getManagerKeyboard();
+        $this->sendBotId = self::MANAGER_BOT_ID;
+        $emptyText = "Ma'lumot topilmadi";
+        // dd($inCommand);
+        if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == self::MANAGER_GROUP_ID) {
+
+            $inCommand = '';
+            if ($commandText == self::COMMAND_OFFICE_ON || $commandText == self::COMMAND_OFFICE_OFF) {
+                $inCommand = self::COMMAND_COME_TIME;
+            }
+            if ($commandText == self::COMMAND_WORK_LIST) {
+                $inCommand = self::COMMAND_WORK_PLAN;
+            }
+            if ($commandText == self::COMMAND_REASON) {
+                $inCommand = self::COMMAND_LATE_REASON;
+            }
+
+            $mp = MessagePlan::where(['template' => "/" . $inCommand])->first();
+
+            if (!empty($mp)) {
+
+                $result = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0')->get();
+
+                $messageText = [];
+
+                foreach ($result as $key => $message) {
+                    if (!isset($messageText[$message->writer_id])) {
+                        $messageText[$message->writer_id] = '@' . $message->receiver->username . ' ' . $message->receiver->fullname;
+                    }
+                    if ($commandText != self::COMMAND_OFFICE_ON || $commandText != self::COMMAND_OFFICE_OFF) {
+                        $messageText[$message->writer_id] .= "\n " . $message->message;
+                    }
+                }
+
+                // dd($messageText);
+                if ($commandText != self::COMMAND_OFFICE_OFF) {
+                    $mesageData = implode("\n", $messageText);
+                    // dd($incomers);
+                } else {
+                    $receivers = Receiver::get()->keyBy('id');
+                    foreach ($receivers as $key => $receiver) {
+                        if (!isset($messageText[$receivers->id])) {
+                            $absents[$message->writer_id] = '@' . $receiver->username . ' ' . $receiver->fullname;
+
+                        }
+                    }
+                    $mesageData = implode("\n", $absents);
+                }
+                if (empty($mesageData)) {
+                    $mesageData = $emptyText;
+                }
+                // dd($mesageData);
+                $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
+            }
+        }
+        // else{
+        // $responce = $this->sendMessage('test', self::MANAGER_GROUP_ID, $keyboard);
+        // }
+    }
     public function setMyCommands()
     {
         $params = [
