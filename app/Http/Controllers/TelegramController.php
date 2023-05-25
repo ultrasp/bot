@@ -54,7 +54,7 @@ class TelegramController extends Controller
     {
         $data = json_encode($request->all());
         // TelegramUpdate::storeData($data);
-        $this->handleMessage($data);
+        $this->handleManagerMessage($data);
 
     }
 
