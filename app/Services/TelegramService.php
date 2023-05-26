@@ -133,10 +133,10 @@ class TelegramService
             case self::COMMAND_LEAVE_WORK:
                 $text = 'Ishxonadan ketgan vaqtingizni kiriting';
                 break;
-            case self::COMMAND_COME_TIME:
+            case self::COMMAND_LATE_REASON:
                 $text = 'Kech qolishingiz  yoki kelmasligingiz sababini yozing';
                 break;
-            case self::COMMAND_COME_TIME:
+            case self::COMMAND_WORK_PLAN:
                 $text = "Bugun qilmoqchi bo'lgan ishlaringizni yozing";
                 break;
         }
