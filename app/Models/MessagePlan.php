@@ -20,6 +20,8 @@ class MessagePlan extends Model
     const CHASTOTA_DAILY = 1;
     const CHASTOTA_WORK_DAYS = 2;
     const CHASTOTA_RANGE_DAY = 3;
+
+    const CHASTOTA_ONE_DAY = 4;
     public static function newItem($text, $sendMinute, $type, $chastota = 0)
     {
         $item = new self();
@@ -58,6 +60,10 @@ class MessagePlan extends Model
                         $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
                         $end = Carbon::createFromFormat('d.m.Y', $template['end_at']);
                         $item->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+                    }
+                    if ($item->chastota == self::CHASTOTA_ONE_DAY) {
+                        $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
+                        $item->setRange($start->format('Y-m-d'), null);
                     }
                 } catch (\Throwable $th) {
 
@@ -113,6 +119,9 @@ class MessagePlan extends Model
                 $hasSetDate = false;
 
             }
+            if ($chastota == self::CHASTOTA_ONE_DAY && empty($time[$startColumn + 3])) {
+                $hasSetDate = false;
+            }
             if (!empty($message) && !empty($time[$startColumn + 2]) && $hasSetDate) {
                 $templates[] = [
                     'message' => $message,
@@ -125,7 +134,7 @@ class MessagePlan extends Model
             }
         }
         // if (!empty($templates)) {
-            MessagePlan::saveTemplates($templates);
+        MessagePlan::saveTemplates($templates);
         // }
         return 1;
     }
@@ -159,7 +168,7 @@ class MessagePlan extends Model
 
     public static function getSystemAsk($command)
     {
-        return self::where(['template' => $command])->whereIn('type' , [self::TYPE_SYSTEM, self::TYPE_SYSTEM_CALLBACK] )->first();
+        return self::where(['template' => $command])->whereIn('type', [self::TYPE_SYSTEM, self::TYPE_SYSTEM_CALLBACK])->first();
     }
 
     public static function makeSystemAsk()
@@ -240,6 +249,9 @@ class MessagePlan extends Model
             $canSend = true;
         }
         if ($this->chastota == MessagePlan::CHASTOTA_RANGE_DAY && $this->start_at >= date('Y-m-d') && $this->end_at <= date('Y-m-d')) {
+            $canSend = true;
+        }
+        if ($this->chastota == MessagePlan::CHASTOTA_ONE_DAY && $this->start_at == date('Y-m-d')) {
             $canSend = true;
         }
         return $canSend;

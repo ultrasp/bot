@@ -174,6 +174,7 @@ class TelegramService
     {
         $commandText = substr($inCommand, 1);
         // dd(in_array(substr($inCommand,1),self::getAllCommands()));
+        $empKeyboards = $this->getEmpKeyboard();
         if (in_array($commandText, self::getSystemBotAsks())) {
             $send_time = date('Y-m-d H:i:s');
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
@@ -188,7 +189,7 @@ class TelegramService
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
             if ($step == 4) {
                 $text = 'You are already registered';
-                $this->sendMessage($text, $writer->chat_id);
+                $this->sendMessage($text, $writer->chat_id, $empKeyboards);
                 return;
             }
             $text = '';
@@ -204,7 +205,7 @@ class TelegramService
             }
             if ($step == 3) {
                 $text = 'Your sucessfully registered';
-                $responce = $this->sendMessage($text, $writer->chat_id);
+                $responce = $this->sendMessage($text, $writer->chat_id, $empKeyboards);
             }
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $text, false);
             $item->step = $step;
@@ -235,6 +236,20 @@ class TelegramService
                     "callback_data" => "/" . self::COMMAND_REASON
                 ]
             ]
+        ];
+    }
+
+    public function getEmpKeyboard()
+    {
+        $keyboards = [];
+        foreach ($this->getSystemBotAsks() as $key => $botCommand) {
+            $keyboards[] = [
+                "text" => "/" . $botCommand,
+                "callback_data" => "/" . $botCommand
+            ];
+        }
+        return [
+            $keyboards
         ];
     }
 

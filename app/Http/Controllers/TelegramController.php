@@ -101,6 +101,9 @@ class TelegramController extends Controller
                 $command = $message->message->text;
                 $isCommand = $messagePlanId > 0;
                 Setting::saveParam(Setting::MAKE_SYSTEM_REPORT, 1);
+                if (!empty($writer) && $message->message->text == '/commands') {
+                    $service->sendMessage('Please choose commands', $writer->chat_id, $service->getEmpKeyboard());
+                }
             }
             // dd($message->message->text);
             if (!empty($writer) && $messagePlanId == 0) {
@@ -114,7 +117,6 @@ class TelegramController extends Controller
                     $sending->answer_time = date('Y-m-d H:i:s');
                     $sending->save();
 
-
                 }
             }
 
@@ -124,10 +126,10 @@ class TelegramController extends Controller
                 Setting::saveParam(Setting::MAKE_REPORT, 1);
             }
 
-            if (in_array(substr($message->message->text, 1), TelegramService::getManagerBotAsks()) && $message->message->chat->id == TelegramService::MANAGER_GROUP_ID) {
-                $isCommand = true;
-                $command = $message->message->text;
-            }
+            // if (in_array(substr($message->message->text, 1), TelegramService::getManagerBotAsks()) && $message->message->chat->id == TelegramService::MANAGER_GROUP_ID) {
+            //     $isCommand = true;
+            //     $command = $message->message->text;
+            // }
             // dd($message->message->text);
             if ($isCommand) {
                 $service->callbackCommand($command, $messagePlanId, $writer, $message->message->chat->id);
