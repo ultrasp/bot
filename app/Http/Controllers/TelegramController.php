@@ -132,7 +132,12 @@ class TelegramController extends Controller
             // }
             // dd($message->message->text);
             if ($isCommand) {
-                $service->callbackCommand($command, $messagePlanId, $writer, $message->message->chat->id);
+                $inMessage = '';
+                if (property_exists($message->message, 'text')) {
+                    $inMessage = $message->message->text;
+                }
+                // dd($inMessage);
+                $service->callbackCommand($command, $messagePlanId, $writer, $inMessage);
             }
         } catch (\Throwable $th) {
             //throw $th;

@@ -123,6 +123,26 @@ class TelegramService
         ];
     }
 
+    public function getRespText($command)
+    {
+        $text = '';
+        switch ($command) {
+            case self::COMMAND_COME_TIME:
+                $text = 'Bugun ish boshlagan vaqtingizni kiriting';
+                break;
+            case self::COMMAND_LEAVE_WORK:
+                $text = 'Ishxonadan ketgan vaqtingizni kiriting';
+                break;
+            case self::COMMAND_COME_TIME:
+                $text = 'Kech qolishingiz  yoki kelmasligingiz sababini yozing';
+                break;
+            case self::COMMAND_COME_TIME:
+                $text = "Bugun qilmoqchi bo'lgan ishlaringizni yozing";
+                break;
+        }
+        return $text;
+    }
+
     public function empCommands()
     {
         return [
@@ -170,7 +190,7 @@ class TelegramService
         $body = $response->getBody()->getContents();
         return json_decode($body);
     }
-    public function callbackCommand($inCommand, $message_plan_id, $writer, $messageChatId)
+    public function callbackCommand($inCommand, $message_plan_id, $writer, $inMessage)
     {
         $commandText = substr($inCommand, 1);
         // dd(in_array(substr($inCommand,1),self::getAllCommands()));
@@ -179,11 +199,13 @@ class TelegramService
             $send_time = date('Y-m-d H:i:s');
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
             $item->is_fake = 1;
-            // dd($item);
             $item->saveSendTime(-1);
-            // dd($item);
         }
-        // dd('aa');
+        // dd($inMessage);
+        $inMessage = substr($inMessage, 1);
+        if (in_array($inMessage, self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
+            $this->sendMessage($this->getRespText($inMessage), $writer->chat_id, $empKeyboards);
+        }
         if (self::COMMAND_REGISTER == $commandText && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
