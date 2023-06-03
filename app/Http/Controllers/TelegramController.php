@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\TelegramManager;
 use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
@@ -13,13 +14,6 @@ use Illuminate\Http\Request;
 
 class TelegramController extends Controller
 {
-
-    public function send()
-    {
-        $service = new TelegramService();
-        $service->sendMessage('test', '2242981');
-        // $service->setMyCommands();
-    }
 
     public function listener(Request $request)
     {
