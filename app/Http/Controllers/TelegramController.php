@@ -73,7 +73,12 @@ class TelegramController extends Controller
         try {
             $message = json_decode($data);
             $service = new TelegramService();
+            $tgManager = new TelegramManager();
             // dd($data);
+            if($tgManager->isCallbackQuery($message)){
+                $tgManager->handleCallbackQuery($message);
+                return;
+            }
             if (!property_exists($message, 'message')) {
                 return;
             }
