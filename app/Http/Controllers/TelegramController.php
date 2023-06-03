@@ -42,10 +42,10 @@ class TelegramController extends Controller
         //     }
         // }
         // dd($telegrams);
-        $update = TelegramUpdate::where(['id' => 76])->first();
+        $update = TelegramUpdate::where(['id' => 1514])->first();
         $data = $update->update_json;
         // $data = '{"update_id":319789677,"message":{"message_id":154,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684568282,"text":"\/come_time","entities":[{"offset":0,"length":10,"type":"bot_command"}]}}';
-        // $data = '{"update_id":319789691,"message":{"message_id":176,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684656933,"text":"Umidjon"}}';
+        // $data = '{"update_id":319789691,"message":{"message_id":176,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684656933,"text":"/come_time"}}';
         // dd($data);
         $this->handleMessage($data);
     }
