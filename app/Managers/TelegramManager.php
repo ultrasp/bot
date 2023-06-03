@@ -88,6 +88,7 @@ class TelegramManager
 
         if($minute == self::CALLBACK_BACK_HOUR){
             $this->sendHour($update->callback_query->message->chat->id,$commandType);
+            return;
         }
         if ($date != date('Y-m-d')) {
             //send date is passed
@@ -95,15 +96,18 @@ class TelegramManager
         }
 
         $receiver = Receiver::where(['chat_id' => $update->callback_query->from->id])->first();
+        $appendText = date('d.m.Y',strtotime($date))." ";
         if (!empty($receiver)) {
             $report = WorkReport::getReceiverDailyReport($receiver->id, date('Y-m-d'));
             if($commandType == self::WORK_START){
                 $report->start_hour = $hour;
                 $report->start_minute = $minute;
+                $appendText .= "Ishga kelgan vaqtingiz ".$hour.":".$minute;
             }
             if($commandType == self::WORK_END){
                 $report->end_hour = $hour;
                 $report->end_minute = $minute;
+                $appendText .= "Ishdan ketgan vaqtingiz ".$hour.":".$minute;
             }
             $report->setTotal();
             Setting::saveParam(Setting::MAKE_SYSTEM_REPORT, 1);
@@ -114,7 +118,7 @@ class TelegramManager
         $tgService->editsendedMessage(
             $update->callback_query->message->message_id,
             $update->callback_query->message->chat->id,
-            "Ma'lumotlaringiz saqlandi"
+            "Ma'lumotlaringiz saqlandi.".$appendText
         );
 
     }
