@@ -147,6 +147,7 @@ class TelegramController extends Controller
                 $service->callbackCommand($command, $messagePlanId, $writer, $inMessage);
             }
         } catch (\Throwable $th) {
+            echo $th->getMessage();
             //throw $th;
         }
 
