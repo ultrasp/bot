@@ -39,3 +39,6 @@ Route::get('/send','MessageController@sendQuestion');
 //
 Route::get('/cron','CronController@run');
 Route::get('/daily','GoogleController@addDailyData');
+
+
+Route::get('/test','TelegramController@test');

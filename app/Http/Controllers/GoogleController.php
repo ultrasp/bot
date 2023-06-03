@@ -32,7 +32,7 @@ class GoogleController extends Controller
 
     public function addDailyData()
     {
-        MessagePlan::writeToExcelDaily();
+        MessagePlan::writeToExcelDaily(true);
         // dd($plans);
     }
 

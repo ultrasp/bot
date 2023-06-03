@@ -57,7 +57,7 @@ class TelegramService
         var_dump($body);
     }
 
-    public function sendMessage($message, $chat_id, $keyboard = [], $reply_to_message_id = null)
+    public function sendMessage($message, $chat_id, $keyboard = [], $isInline = false, $reply_to_message_id = null)
     {
         $params = [
             'chat_id' => $chat_id,
@@ -67,11 +67,17 @@ class TelegramService
             $params['reply_to_message_id'] = $reply_to_message_id;
         }
         if (!empty($keyboard)) {
-            $params['reply_markup'] = [
-                'keyboard' => $keyboard,
-                'one_time_keyboard' => false,
-                'resize_keyboard' => true
-            ];
+            $keyboardParams = [];
+            if ($isInline) {
+                $keyboardParams = ['inline_keyboard' => $keyboard];
+            } else {
+                $keyboardParams = [
+                    'keyboard' => $keyboard,
+                    'one_time_keyboard' => false,
+                    'resize_keyboard' => true
+                ];
+            }
+            $params['reply_markup'] = $keyboardParams;
         }
         $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/sendMessage', ['json' => $params]);
 
@@ -80,7 +86,28 @@ class TelegramService
         return json_decode($body);
     }
 
+    public function editsendedMessage($messageId, $chat_id, $message, $keyboard = [])
+    {
+        $params = [
+            'message_id' => $messageId,
+            'chat_id' => $chat_id,
+            'text' => $message,
+        ];
+        if (!empty($reply_to_message_id)) {
+            $params['reply_to_message_id'] = $reply_to_message_id;
+        }
+        if (!empty($keyboard)) {
+            $keyboardParams = ['inline_keyboard' => $keyboard];
+            $params['reply_markup'] = $keyboardParams;
+        }
+        $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/editMessageText', ['json' => $params]);
+
+        $body = $response->getBody()->getContents();
+        return json_decode($body);
+    }
+
     const COMMAND_REGISTER = 'register';
+    const COMMAND_TOTAL_WORK_TIME = 'total_work_time';
     const COMMAND_COME_TIME = 'come_time';
     const COMMAND_LEAVE_WORK = 'leave_work';
     const COMMAND_LATE_REASON = 'late_reason';
@@ -106,6 +133,7 @@ class TelegramService
     {
         return [
             self::COMMAND_REGISTER,
+            self::COMMAND_TOTAL_WORK_TIME,
             self::COMMAND_COME_TIME,
             self::COMMAND_LEAVE_WORK,
             self::COMMAND_LATE_REASON,

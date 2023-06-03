@@ -13,7 +13,6 @@ class MessagePlan extends Model
     use SoftDeletes;
     const TYPE_ASK = 1;
     const TYPE_SYSTEM = 2;
-
     const TYPE_SYSTEM_CALLBACK = 4;
     const TYPE_BOT_ANSWER = 3;
 
@@ -22,13 +21,28 @@ class MessagePlan extends Model
     const CHASTOTA_RANGE_DAY = 3;
 
     const CHASTOTA_ONE_DAY = 4;
-    public static function newItem($text, $sendMinute, $type, $chastota = 0)
+
+    protected $fillable = ['template'];
+
+    public static function newItem($text, $sendMinute, $type, $chastota = 0, $hide = 0)
     {
         $item = new self();
         $item->template = $text;
         $item->send_minute = $sendMinute;
         $item->type = $type;
         $item->chastota = $chastota;
+        $item->hide = $hide;
+        $item->save();
+        return $item;
+    }
+
+    public static function newCommandItem($text, $type, $hide = 0)
+    {
+        $item = self::firstOrNew(['template' => $text]);
+        $item->send_minute = 0;
+        $item->type = $type;
+        $item->chastota = 0;
+        $item->hide = $hide;
         $item->save();
         return $item;
     }
@@ -178,7 +192,11 @@ class MessagePlan extends Model
             $dbommand = '/' . $command;
             $mplan = self::getSystemAsk($dbommand);
             if (empty($mplan)) {
-                self::newItem($dbommand, 0, $command == TelegramService::COMMAND_REGISTER ? self::TYPE_SYSTEM_CALLBACK : self::TYPE_SYSTEM);
+                self::newCommandItem(
+                    $dbommand,
+                    $command == TelegramService::COMMAND_REGISTER ? self::TYPE_SYSTEM_CALLBACK : self::TYPE_SYSTEM,
+                    $command == TelegramService::COMMAND_TOTAL_WORK_TIME ? 1 : 0
+                );
             }
         }
     }
@@ -210,7 +228,12 @@ class MessagePlan extends Model
         $sendings = MessageSending::getMonthlyInfo($selDate, $isBotCommand)->groupBy(function ($item) {
             return date('Y-m-d', strtotime($item->send_plan_time)) . '_' . $item->message_plan_id . '_' . $item->receiver_id;
         });
-        // dd($sendings);
+
+        if ($isBotCommand) {
+            $workReports = WorkReport::getMonthlyInfo($selDate)->keyBy(function ($item) {
+                return $item->date . '_' . $item->receiver_id;
+            });
+        }
         foreach ($receivers as $receiver) {
             $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
             foreach ($plans as $plan) {
@@ -219,14 +242,31 @@ class MessagePlan extends Model
                 ];
                 for ($i = 0; $i < $days; $i++) {
                     $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
-                    $key = $day . '_' . $plan->id . '_' . $receiver->id;
-                    $daySendings = $sendings->get($key);
                     $messageText = '';
-                    if ($daySendings) {
-                        foreach ($daySendings as $key => $sendingItem) {
-                            foreach ($sendingItem->incomes as $income) {
-                                // dd($income);
-                                $messageText .= $income->message . "\r ";
+                    $command = substr($plan->template, 1);
+                    if ($isBotCommand && in_array($command, [TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK])) {
+                        $key = $day . '_' . $receiver->id;
+                        $dayWorkReport = $workReports->get($key);
+                        if ($dayWorkReport) {
+                            if ($command == TelegramService::COMMAND_COME_TIME) {
+                                $messageText = $dayWorkReport->start_hour . ':' . $dayWorkReport->start_minute;
+                            }
+                            if ($command == TelegramService::COMMAND_LEAVE_WORK) {
+                                $messageText = $dayWorkReport->end_hour . ':' . $dayWorkReport->end_minute;
+                            }
+                            if ($command == TelegramService::COMMAND_TOTAL_WORK_TIME) {
+                                $messageText = $dayWorkReport->total;
+                            }
+                        }
+                    } else {
+                        $key = $day . '_' . $plan->id . '_' . $receiver->id;
+                        $daySendings = $sendings->get($key);
+                        if ($daySendings) {
+                            foreach ($daySendings as $key => $sendingItem) {
+                                foreach ($sendingItem->incomes as $income) {
+                                    // dd($income);
+                                    $messageText .= $income->message . "\r ";
+                                }
                             }
                         }
                     }
