@@ -106,6 +106,7 @@ class TelegramManager
                 $report->end_minute = $minute;
             }
             $report->setTotal();
+            Setting::saveParam(Setting::MAKE_SYSTEM_REPORT, 1);
             $report->save();
         }
 

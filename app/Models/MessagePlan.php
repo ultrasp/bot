@@ -244,7 +244,7 @@ class MessagePlan extends Model
                     $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
                     $messageText = '';
                     $command = substr($plan->template, 1);
-                    if ($isBotCommand && in_array($command, [TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK])) {
+                    if ($isBotCommand && in_array($command, [TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK,TelegramService::COMMAND_TOTAL_WORK_TIME])) {
                         $key = $day . '_' . $receiver->id;
                         $dayWorkReport = $workReports->get($key);
                         if ($dayWorkReport) {
