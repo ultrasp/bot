@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\MessagePlanManager;
+use App\Managers\MessageSendingManager;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
@@ -11,18 +13,8 @@ class MessageController extends Controller
 {
 
     public function makeSendings(){
-        $isChanged = MessagePlan::updatePlans();
-
-        $sendingTime = Setting::getItem(Setting::SENDING_CREATE_TIME);
-        $isSendingsUpdated = false;
-        if ((!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value))) != date('Y-m-d') || $isChanged) {
-            MessageSending::createSendings();
-            $isSendingsUpdated = true;
-        }
-        if ($isSendingsUpdated) {
-            $sendingTime->setVal(date('Y-m-d H:i:s'));
-        }
-        MessageSending::send();
+        $isChanged = MessagePlanManager::updatePlans();
+        MessageSendingManager::updateAndSend($isChanged);
     }
 
     public function sendQuestion(){

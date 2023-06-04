@@ -95,7 +95,6 @@ class TelegramController extends Controller
                 // Receiver::writeToSheet();
             }
 
-            $tgManager = new TelegramManager();
             $subCommand = substr($message->message->text,1);
             if ( $tgManager->isWorkTimeCommand($subCommand)) {
                 $tgManager->sendWorkTime($subCommand,$writer->chat_id);

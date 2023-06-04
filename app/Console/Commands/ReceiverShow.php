@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Managers\ReceiverManager;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
@@ -42,11 +43,6 @@ class ReceiverShow extends Command
      */
     public function handle()
     {
-        $isChanged = Receiver::readSheet();
-        $setting = Setting::getItem(Setting::MAKE_USER_LIST);
-        if ($setting->param_value == null || $setting->param_value == 1 || $isChanged) {
-            Receiver::writeToSheet();
-            $setting->setVal(0);
-        }
+        ReceiverManager::updateReceiverData();
     }
 }

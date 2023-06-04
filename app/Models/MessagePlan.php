@@ -6,6 +6,7 @@ use App\Services\GoogleService;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MessagePlan extends Model
@@ -23,6 +24,16 @@ class MessagePlan extends Model
     const CHASTOTA_ONE_DAY = 4;
 
     protected $fillable = ['template'];
+
+    public function receivers(): MorphToMany
+    {
+        return $this->morphedByMany(Receiver::class, 'message_plan_receivable');
+    }
+
+    public function groups(): MorphToMany
+    {
+        return $this->morphedByMany(Group::class, 'message_plan_receivable');
+    }
 
     public static function newItem($text, $sendMinute, $type, $chastota = 0, $hide = 0)
     {
@@ -69,19 +80,22 @@ class MessagePlan extends Model
                 $notRemoveTemplates[] = $savedDb->id;
             } else {
                 try {
-                    $item = self::newItem($template['message'], $template['time'], self::TYPE_ASK, $template['chastota']);
-                    if ($item->chastota == self::CHASTOTA_RANGE_DAY) {
+                    $savedDb = self::newItem($template['message'], $template['time'], self::TYPE_ASK, $template['chastota']);
+                    if ($savedDb->chastota == self::CHASTOTA_RANGE_DAY) {
                         $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
                         $end = Carbon::createFromFormat('d.m.Y', $template['end_at']);
-                        $item->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+                        $savedDb->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
                     }
-                    if ($item->chastota == self::CHASTOTA_ONE_DAY) {
+                    if ($savedDb->chastota == self::CHASTOTA_ONE_DAY) {
                         $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
-                        $item->setRange($start->format('Y-m-d'), null);
+                        $savedDb->setRange($start->format('Y-m-d'), null);
                     }
                 } catch (\Throwable $th) {
 
                 }
+            }
+            if(!empty($savedDb)){
+                $savedDb->attachReceviers($template['groups']);
             }
         }
         foreach ($allTemplates as $dbTemplate) {
@@ -92,65 +106,34 @@ class MessagePlan extends Model
         }
     }
 
+    public function attachReceviers(?string $receviers){
+        $this->send_groups = $receviers;
+        $this->save();
+        $this->receivers()->sync([]);
+        $this->groups()->sync([]);
+        if(!empty($receviers)){
+            if(str_starts_with($receviers,'@')){
+                $receiver = Receiver::getByUsername(substr($receviers,1));
+                $this->receivers()->sync([$receiver->id]);
+            }else{
+                $receiveGroupCodes = explode(",",$receviers);
+                $receiverIds = [];
+                foreach($receiveGroupCodes as $groupCode){
+                    $group = Group::where('code',$groupCode)->first();
+                    if(!empty($group)){
+                        $receiverIds[] = $group->id;
+                    }
+                }
+                $this->groups()->sync($receiverIds);
+            }
+        }
+    }
+
     public function setRange($startAt, $endAt)
     {
         $this->start_at = $startAt;
         $this->end_at = $endAt;
         $this->save();
-    }
-
-    public static function updatePlans()
-    {
-        $gooleService = new GoogleService();
-        $times = $gooleService->readSheetValues(GoogleService::SPREADSHEET_ID, GoogleService::readSheet);
-
-        $setting = Setting::getItem(Setting::MESSAGE_LIST);
-
-        $encodeData = md5(serialize($times));
-
-        // dd($setting);
-        if ($setting->param_value == $encodeData) {
-            return 0;
-        } else {
-            $setting->param_value = $encodeData;
-            $setting->save();
-        }
-        // dd($times);
-        $templates = [];
-        $startColumn = 1;
-        // dd($times);
-        foreach ($times as $key => $time) {
-            if ($key == 0 || empty($time[$startColumn]))
-                continue;
-            $timeData = explode(':', $time[$startColumn]);
-            $minuteFromMidnight = $timeData[0] * 60 + $timeData[1];
-
-            $message = $time[$startColumn + 1];
-            $chastota = $time[$startColumn + 2];
-            $hasSetDate = true;
-
-            if ($chastota == self::CHASTOTA_RANGE_DAY && (empty($time[$startColumn + 3]) || empty($time[$startColumn + 4]))) {
-                $hasSetDate = false;
-
-            }
-            if ($chastota == self::CHASTOTA_ONE_DAY && empty($time[$startColumn + 3])) {
-                $hasSetDate = false;
-            }
-            if (!empty($message) && !empty($time[$startColumn + 2]) && $hasSetDate) {
-                $templates[] = [
-                    'message' => $message,
-                    'time' => $minuteFromMidnight,
-                    'chastota' => $time[$startColumn + 2],
-                    'start_at' => $time[$startColumn + 3] ?? null,
-                    'end_at' => $time[$startColumn + 4] ?? null,
-                ];
-
-            }
-        }
-        // if (!empty($templates)) {
-        MessagePlan::saveTemplates($templates);
-        // }
-        return 1;
     }
 
     public static function getDailyInfo($date)
@@ -201,83 +184,6 @@ class MessagePlan extends Model
         }
     }
 
-    public static function writeToExcelDaily($isBotCommand = false)
-    {
-        $service = new GoogleService();
-        $selDate = date('Y-m-d');
-
-        $newSheetName = date('m.Y', strtotime($selDate)) . ' ' . ($isBotCommand ? '0' : '1');
-        $service->checkExistSheet($newSheetName);
-
-        $plans = MessagePlan::getMonthlyInfo($selDate, $isBotCommand ? self::TYPE_SYSTEM : self::TYPE_ASK);
-        $header = [''];
-        $days = date('t', strtotime($selDate));
-
-        for ($i = 0; $i < $days; $i++) {
-            $day = date('d.m.Y', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
-            $header[] = $day;
-        }
-
-        $data =
-            [
-                $header
-            ];
-
-        $receivers = Receiver::getEmployees();
-
-        $sendings = MessageSending::getMonthlyInfo($selDate, $isBotCommand)->groupBy(function ($item) {
-            return date('Y-m-d', strtotime($item->send_plan_time)) . '_' . $item->message_plan_id . '_' . $item->receiver_id;
-        });
-
-        if ($isBotCommand) {
-            $workReports = WorkReport::getMonthlyInfo($selDate)->keyBy(function ($item) {
-                return $item->date . '_' . $item->receiver_id;
-            });
-        }
-        foreach ($receivers as $receiver) {
-            $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
-            foreach ($plans as $plan) {
-                $row = [
-                    ($isBotCommand ? '' : $plan->covertToString()) . ' ' . $plan->template
-                ];
-                for ($i = 0; $i < $days; $i++) {
-                    $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
-                    $messageText = '';
-                    $command = substr($plan->template, 1);
-                    if ($isBotCommand && in_array($command, [TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK,TelegramService::COMMAND_TOTAL_WORK_TIME])) {
-                        $key = $day . '_' . $receiver->id;
-                        $dayWorkReport = $workReports->get($key);
-                        if ($dayWorkReport) {
-                            if ($command == TelegramService::COMMAND_COME_TIME) {
-                                $messageText = $dayWorkReport->start_hour . ':' . $dayWorkReport->start_minute;
-                            }
-                            if ($command == TelegramService::COMMAND_LEAVE_WORK) {
-                                $messageText = $dayWorkReport->end_hour . ':' . $dayWorkReport->end_minute;
-                            }
-                            if ($command == TelegramService::COMMAND_TOTAL_WORK_TIME) {
-                                $messageText = $dayWorkReport->total;
-                            }
-                        }
-                    } else {
-                        $key = $day . '_' . $plan->id . '_' . $receiver->id;
-                        $daySendings = $sendings->get($key);
-                        if ($daySendings) {
-                            foreach ($daySendings as $key => $sendingItem) {
-                                foreach ($sendingItem->incomes as $income) {
-                                    // dd($income);
-                                    $messageText .= $income->message . "\r ";
-                                }
-                            }
-                        }
-                    }
-                    $row[] = $messageText;
-                }
-                $data[] = $row;
-            }
-        }
-        $service->deleteRows($newSheetName);
-        $service->writeValues($newSheetName, array_values($data));
-    }
 
     public function canSend()
     {
@@ -295,5 +201,22 @@ class MessagePlan extends Model
             $canSend = true;
         }
         return $canSend;
+    }
+
+    public function canSendReceiver(Receiver $receiver):bool{
+        if(empty($this->send_groups)){
+            return true;
+        }
+        $receivers = $this->receivers->keyBy('id'); 
+        if(!empty($receivers) && $receivers->has($receiver->id)){
+            return true;
+        }
+        $groups = $this->groups->pluck('id')->toArray();
+        $receiverGroups = $receiver->groups->pluck('id')->toArray();
+        if(!empty($groups) && !empty(array_intersect($groups,$receiverGroups))){
+            return true;
+        }
+        return false; 
+        // $receiver->groups->pluck()
     }
 }

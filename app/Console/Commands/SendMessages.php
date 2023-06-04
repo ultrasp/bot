@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Managers\MessagePlanManager;
+use App\Managers\MessageSendingManager;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Setting;
@@ -41,17 +43,7 @@ class SendMessages extends Command
      */
     public function handle()
     {
-        $isChanged = MessagePlan::updatePlans();
-
-        $sendingTime = Setting::getItem(Setting::SENDING_CREATE_TIME);
-        $isSendingsUpdated = false;
-        if ($sendingTime->param_value == null || (!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value)) != date('Y-m-d')) || $isChanged) {
-            MessageSending::createSendings();
-            $isSendingsUpdated = true;
-        }
-        if ($isSendingsUpdated) {
-            $sendingTime->setVal(date('Y-m-d H:i:s'));
-        }
-        MessageSending::send();
+        $isChanged = MessagePlanManager::updatePlans();
+        MessageSendingManager::updateAndSend($isChanged);
     }
 }

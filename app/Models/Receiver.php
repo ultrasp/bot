@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\GoogleService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Receiver extends Model
@@ -15,6 +16,12 @@ class Receiver extends Model
         return self::firstOrNew(['username' => $username]);
     }
 
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(Group::class);
+    }
+
+
     const USER_TYPE_EMPLOYEE = 2;
     const USER_TYPE_GUEST = 0;
     const USER_TYPE_GUEST_FILLED = 1;
@@ -22,9 +29,13 @@ class Receiver extends Model
 
     const BOT_USERNAME = 'UsHelperBot';
 
-    public static function getEmployees()
+    public static function getEmployees($with = [])
     {
-        return self::where(['user_type' => self::USER_TYPE_EMPLOYEE])->get();
+        $query = self::where(['user_type' => self::USER_TYPE_EMPLOYEE]);
+        if(!empty($with)){
+            $query->with($with);
+        }
+        return $query->get();
     }
     public static function storeData($chatData, $userType = self::USER_TYPE_GUEST)
     {
@@ -38,72 +49,6 @@ class Receiver extends Model
         return $user;
     }
     //
-
-    public static function writeToSheet()
-    {
-        $all = self::get();
-        $data = [
-            [
-                'username',
-                'last_name',
-                'first_name',
-                'user_type',
-                'last_answer_time',
-                'message_cnt',
-                'fullname',
-                'contact_phone'
-            ]
-        ];
-        foreach ($all as $key => $user) {
-            $data[] = [
-                $user->username,
-                $user->lastname ?? '',
-                $user->firstname ?? '',
-                $user->user_type,
-                $user->last_answer_time ? date('Y-m-d H:i:s', strtotime($user->last_answer_time)) : '',
-                $user->message_cnt,
-                $user->fullname,
-                $user->contact_phone
-            ];
-        }
-        $sheet = 'users';
-        $service = new GoogleService();
-        // dd($data);
-        $service->deleteRows($sheet);
-        $service->writeValues($sheet, $data);
-    }
-
-    public static function readSheet()
-    {
-        $gooleService = new GoogleService();
-        $users = $gooleService->readSheetValues(GoogleService::SPREADSHEET_ID, GoogleService::usersSheet);
-        // dd($users);
-
-        $setting = Setting::getItem(Setting::USER_LIST);
-
-        $encodeData = md5(serialize($users));
-
-        // dd($setting);
-        if ($setting->param_value == $encodeData) {
-            return 0;
-        } else {
-            $setting->param_value = $encodeData;
-            $setting->save();
-        }
-
-        $userTypeColNumber = 3;
-        foreach ($users as $row) {
-            if (empty($row[0]) || $row[$userTypeColNumber] == '') {
-                continue;
-            }
-            $user = self::getByUsername($row[0]);
-            if (empty($user->id))
-                continue;
-            $user->user_type = $row[$userTypeColNumber];
-            $user->save();
-        }
-        return 1;
-    }
 
     public static function storeBots()
     {
