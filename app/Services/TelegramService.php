@@ -398,7 +398,8 @@ class TelegramService
                 continue;
             }
             if (!isset($messageText[$report->receiver_id])) {
-                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' .  $report->receiver->fullname.' '.str_pad($report->start_hour,2,"0",STR_PAD_LEFT) .':'. str_pad($report->start_minute,2,"0",STR_PAD_LEFT);
+                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' .  $report->receiver->fullname.' ';
+                $messageText[$report->receiver_id] .= $isCome ? str_pad($report->start_hour,2,"0",STR_PAD_LEFT) .':'. str_pad($report->start_minute,2,"0",STR_PAD_LEFT) : str_pad($report->end_hour,2,"0",STR_PAD_LEFT) .':'. str_pad($report->end_minute,2,"0",STR_PAD_LEFT);
             }
         }
 
