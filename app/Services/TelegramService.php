@@ -388,10 +388,10 @@ class TelegramService
         foreach ($reports as $key => $report) {
             $isOk = false;
             $givedReportWorkers[$report->receiver_id] = $report->receiver_id;
-            if($isCome && $report->start_hour > 0  && $report->start_minute > 0 && $report->end_hour == 0 && $report->end_minute == 0){
+            if($isCome && ($report->start_hour + $report->start_minute) > 0 && ($report->end_hour + $report->end_minute) == 0){
                 $isOk = true;
             }
-            if(!$isCome && $report->end_hour > 0  && $report->end_minute > 0){
+            if(!$isCome && ( $report->end_hour + $report->end_minute) > 0){
                 $isOk = true;
             }
             if(!$isOk){
