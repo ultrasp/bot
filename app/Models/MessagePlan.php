@@ -16,12 +16,16 @@ class MessagePlan extends Model
     const TYPE_SYSTEM = 2;
     const TYPE_SYSTEM_CALLBACK = 4;
     const TYPE_BOT_ANSWER = 3;
+    const TYPE_CUSTOM_CALLBACK = 5;
 
     const CHASTOTA_DAILY = 1;
     const CHASTOTA_WORK_DAYS = 2;
     const CHASTOTA_RANGE_DAY = 3;
 
     const CHASTOTA_ONE_DAY = 4;
+
+    const PARENT_ACTION_TYPE_RESPONCED = 1;
+    const PARENT_ACTION_TYPE_NOT_ANSWER = 2;
 
     protected $fillable = ['template'];
 
@@ -63,64 +67,23 @@ class MessagePlan extends Model
         return self::where(['type' => $type])->get();
     }
 
-    public static function saveTemplates($templates)
+
+    public function attachReceviers(?string $receviers)
     {
-        $allTemplates = self::getAllByType(self::TYPE_ASK);
-        $notRemoveTemplates = [];
-        foreach ($templates as $template) {
-            $savedDb = $allTemplates->first(function ($dbTemplate) use ($template) {
-                return $dbTemplate->template == $template['message']
-                    && $dbTemplate->send_minute == $template['time']
-                    && $dbTemplate->chastota == $template['chastota'];
-                // 'start_at' => $time[$startColumn + 3],
-                // 'end_at' => $time[$startColumn + 4],
-
-            });
-            if (!empty($savedDb)) {
-                $notRemoveTemplates[] = $savedDb->id;
-            } else {
-                try {
-                    $savedDb = self::newItem($template['message'], $template['time'], self::TYPE_ASK, $template['chastota']);
-                    if ($savedDb->chastota == self::CHASTOTA_RANGE_DAY) {
-                        $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
-                        $end = Carbon::createFromFormat('d.m.Y', $template['end_at']);
-                        $savedDb->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
-                    }
-                    if ($savedDb->chastota == self::CHASTOTA_ONE_DAY) {
-                        $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
-                        $savedDb->setRange($start->format('Y-m-d'), null);
-                    }
-                } catch (\Throwable $th) {
-
-                }
-            }
-            if(!empty($savedDb)){
-                $savedDb->attachReceviers($template['groups']);
-            }
-        }
-        foreach ($allTemplates as $dbTemplate) {
-            if (!in_array($dbTemplate->id, $notRemoveTemplates)) {
-                $dbTemplate->delete();
-                MessageSending::removeUnsendedSendings($dbTemplate->id);
-            }
-        }
-    }
-
-    public function attachReceviers(?string $receviers){
         $this->send_groups = $receviers;
         $this->save();
         $this->receivers()->sync([]);
         $this->groups()->sync([]);
-        if(!empty($receviers)){
-            if(str_starts_with($receviers,'@')){
-                $receiver = Receiver::getByUsername(substr($receviers,1));
+        if (!empty($receviers)) {
+            if (str_starts_with($receviers, '@')) {
+                $receiver = Receiver::getByUsername(substr($receviers, 1));
                 $this->receivers()->sync([$receiver->id]);
-            }else{
-                $receiveGroupCodes = explode(",",$receviers);
+            } else {
+                $receiveGroupCodes = explode(",", $receviers);
                 $receiverIds = [];
-                foreach($receiveGroupCodes as $groupCode){
-                    $group = Group::where('code',$groupCode)->first();
-                    if(!empty($group)){
+                foreach ($receiveGroupCodes as $groupCode) {
+                    $group = Group::where('code', $groupCode)->first();
+                    if (!empty($group)) {
                         $receiverIds[] = $group->id;
                     }
                 }
@@ -203,20 +166,34 @@ class MessagePlan extends Model
         return $canSend;
     }
 
-    public function canSendReceiver(Receiver $receiver):bool{
-        if(empty($this->send_groups)){
+    public function canSendReceiver(Receiver $receiver): bool
+    {
+        if (empty($this->send_groups)) {
             return true;
         }
-        $receivers = $this->receivers->keyBy('id'); 
-        if(!empty($receivers) && $receivers->has($receiver->id)){
+        $receivers = $this->receivers->keyBy('id');
+        if (!empty($receivers) && $receivers->has($receiver->id)) {
             return true;
         }
         $groups = $this->groups->pluck('id')->toArray();
         $receiverGroups = $receiver->groups->pluck('id')->toArray();
-        if(!empty($groups) && !empty(array_intersect($groups,$receiverGroups))){
+        if (!empty($groups) && !empty(array_intersect($groups, $receiverGroups))) {
             return true;
         }
-        return false; 
-        // $receiver->groups->pluck()
+        return false;
+    }
+
+    public function getCallbackMessage(string $command, string $actionType)
+    {
+        $command = self::where([
+            'template' => $command
+        ])->first();
+
+        $messages = self::where([
+            'parent_id' => $command->id,
+            'parent_action_type' => $actionType
+        ])->get();
+
+        return $messages;
     }
 }

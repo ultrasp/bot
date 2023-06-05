@@ -9,9 +9,11 @@ use App\Models\Setting;
 use App\Models\WorkReport;
 use App\Services\GoogleService;
 use App\Services\TelegramService;
+use Carbon\Carbon;
 
 class MessagePlanManager
 {
+    const START_COLUMN = 2;
 
     public static function updatePlans()
     {
@@ -31,13 +33,18 @@ class MessagePlanManager
         // }
         // dd($times);
         $templates = [];
-        $startColumn = 1;
+        $startColumn = self::START_COLUMN;
         // dd($times);
         foreach ($times as $key => $time) {
-            if ($key == 0 || empty($time[$startColumn]))
+            if ($key == 0 || !isset($time[$startColumn]) || $time[$startColumn] == '')
                 continue;
+
             $timeData = explode(':', $time[$startColumn]);
-            $minuteFromMidnight = $timeData[0] * 60 + $timeData[1];
+            $minuteFromMidnight = 0;
+
+            if (isset($timeData[1])) {
+                $minuteFromMidnight = $timeData[0] * 60 + $timeData[1];
+            }
 
             $message = $time[$startColumn + 1];
             $chastota = $time[$startColumn + 2];
@@ -50,7 +57,7 @@ class MessagePlanManager
             if ($chastota == MessagePlan::CHASTOTA_ONE_DAY && empty($time[$startColumn + 3])) {
                 $hasSetDate = false;
             }
-            if (!empty($message) && !empty($time[$startColumn + 2]) && $hasSetDate) {
+            if (!empty($message) && (!empty($time[$startColumn + 2]) || !empty($time[$startColumn - 2])) && $hasSetDate) {
                 $templates[] = [
                     'message' => $message,
                     'time' => $minuteFromMidnight,
@@ -58,12 +65,14 @@ class MessagePlanManager
                     'start_at' => $time[$startColumn + 3] ?? null,
                     'end_at' => $time[$startColumn + 4] ?? null,
                     'groups' => $time[$startColumn + 5] ?? null,
+                    'parent_command_text' => $time[$startColumn - 2] ?? null,
+                    'parent_command_action' => $time[$startColumn - 1] ?? 0
                 ];
-
             }
         }
+        // dd($templates);
         // if (!empty($templates)) {
-        MessagePlan::saveTemplates($templates);
+        MessagePlanManager::saveTemplates($templates);
         // }
         return 1;
     }
@@ -146,5 +155,118 @@ class MessagePlanManager
         $service->writeValues($newSheetName, array_values($data));
     }
 
+    public static function saveTemplates($templates)
+    {
+        self::saveAskTemplates($templates);
+        self::saveCallbackTemplates($templates);
+    }
+
+    public static function saveAskTemplates($templates)
+    {
+        $allTemplates = MessagePlan::getAllByType(MessagePlan::TYPE_ASK);
+        $notRemoveTemplates = [];
+
+        foreach ($templates as $template) {
+            if (!empty($template['parent_command_text'])) {
+                continue;
+            }
+            $savedDb = $allTemplates->first(function ($dbTemplate) use ($template) {
+                return $dbTemplate->template == $template['message']
+                    && $dbTemplate->send_minute == $template['time']
+                    && $dbTemplate->chastota == $template['chastota'];
+            });
+
+            if (!empty($savedDb)) {
+                $notRemoveTemplates[] = $savedDb->id;
+            } else {
+                try {
+                    $savedDb = MessagePlan::newItem($template['message'], $template['time'], MessagePlan::TYPE_ASK, $template['chastota']);
+                    if ($savedDb->chastota == MessagePlan::CHASTOTA_RANGE_DAY) {
+                        $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
+                        $end = Carbon::createFromFormat('d.m.Y', $template['end_at']);
+                        $savedDb->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+                    }
+                    if ($savedDb->chastota == MessagePlan::CHASTOTA_ONE_DAY) {
+                        $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
+                        $savedDb->setRange($start->format('Y-m-d'), null);
+                    }
+                } catch (\Throwable $th) {
+
+                }
+            }
+            if (!empty($savedDb)) {
+                $savedDb->attachReceviers($template['groups']);
+            }
+        }
+
+        foreach ($allTemplates as $dbTemplate) {
+            if (!in_array($dbTemplate->id, $notRemoveTemplates)) {
+                $dbTemplate->delete();
+                MessageSending::removeUnsendedSendings($dbTemplate->id);
+            }
+        }
+
+    }
+
+
+    public static function saveCallbackTemplates($templates)
+    {
+
+
+        $commandTemplates = MessagePlan::getAllByType(MessagePlan::TYPE_SYSTEM);
+        $commandCustomCallbacks = MessagePlan::getAllByType(MessagePlan::TYPE_CUSTOM_CALLBACK);
+        $notRemoveCallbacks = [];
+        // dd($templates);
+        foreach ($templates as $template) {
+            if (empty($template['parent_command_text'])) {
+                continue;
+            }
+
+            // dd($template);
+            $comMessage = $commandTemplates->first(function ($commandTemplate) use ($template) {
+                return $commandTemplate->template == $template['parent_command_text'];
+            });
+
+            if (empty($comMessage)) {
+                continue;
+            }
+            $savedDb = null;
+            $savedDb = $commandCustomCallbacks->first(function ($dbTemplate) use ($template, $comMessage) {
+                return ($dbTemplate->parent_action_type == $template['parent_command_action'] ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER)
+                    && $dbTemplate->parent_id == $comMessage->id
+                    && $dbTemplate->send_minute == $template['time']
+                    && $dbTemplate->send_groups == $template['groups']
+                ;
+            });
+
+            if (!empty($savedDb)) {
+                $notRemoveCallbacks[] = $savedDb->id;
+                continue;
+            }
+
+            try {
+                $savedDb = MessagePlan::newItem($template['message'], $template['time'], MessagePlan::TYPE_CUSTOM_CALLBACK, $template['chastota']);
+                $savedDb->parent_id = $comMessage->id;
+                $savedDb->parent_action_type = $template['parent_command_text'] ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER;
+                $savedDb->save();
+            } catch (\Throwable $th) {
+                echo $th->getMessage();
+            }
+
+            if (!empty($savedDb)) {
+                $savedDb->attachReceviers($template['groups']);
+            }
+        }
+
+        // dd($notRemoveCallbacks);
+        foreach ($commandCustomCallbacks as $dbTemplate) {
+            if (!in_array($dbTemplate->id, $notRemoveCallbacks)) {
+                $dbTemplate->delete();
+                MessageSending::removeUnsendedSendings($dbTemplate->id);
+            }
+        }
+
+
+    }
 
 }

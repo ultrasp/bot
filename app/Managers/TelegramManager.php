@@ -113,7 +113,7 @@ class TelegramManager
             Setting::saveParam(Setting::MAKE_SYSTEM_REPORT, 1);
             $report->save();
         }
-
+        
         $tgService = new TelegramService;
         $tgService->editsendedMessage(
             $update->callback_query->message->message_id,
