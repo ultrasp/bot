@@ -13,6 +13,12 @@ class WorkReport extends Model
     
     const TYPE_WORK_HOUR = 1;
     const TYPE_WORK_BREAK = 1;
+
+    public function receiver()
+    {
+        return $this->belongsTo(Receiver::class);
+    }
+
     public static function getReceiverDailyReport(string $receiver_id,string $date)
     {
         return self::firstOrNew(['receiver_id' => $receiver_id,'date' => $date]);

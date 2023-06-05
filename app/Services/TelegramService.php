@@ -7,6 +7,7 @@ use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
 use App\Models\Setting;
+use App\Models\WorkReport;
 use GuzzleHttp\Client;
 
 class TelegramService
@@ -313,8 +314,13 @@ class TelegramService
         if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == self::MANAGER_GROUP_ID) {
 
             $inCommand = '';
-            if ($commandText == self::COMMAND_OFFICE_ON || $commandText == self::COMMAND_OFFICE_OFF) {
-                $inCommand = self::COMMAND_COME_TIME;
+            if($commandText == self::COMMAND_OFFICE_ON){
+                $this->handleOfficeCome();
+                return;
+            }
+            if($commandText == self::COMMAND_OFFICE_OFF){
+                $this->handleOfficeCome(false);
+                return;
             }
             if ($commandText == self::COMMAND_WORK_LIST) {
                 $inCommand = self::COMMAND_WORK_PLAN;
@@ -365,6 +371,41 @@ class TelegramService
         // else{
         // $responce = $this->sendMessage('test', self::MANAGER_GROUP_ID, $keyboard);
         // }
+    }
+
+    public function handleOfficeCome($isCome = true){
+        $keyboard = $this->getManagerKeyboard();
+        $emptyText = "Ma'lumot topilmadi";
+        $reports = WorkReport::where([
+            'date' => date('Y-m-d'),
+            'type' => 1 
+        ])
+        ->get();
+
+        $messageText = [];
+
+        foreach ($reports as $key => $report) {
+            $isOk = false;
+            if($isCome && $report->start_hour > 0  && $report->start_minute > 0 && $report->end_hour == 0 && $report->end_minute == 0){
+                $isOk = true;
+            }
+            if(!$isCome && $report->end_hour > 0  && $report->end_minute > 0){
+                $isOk = true;
+            }
+            if(!$isOk){
+                continue;
+            }
+            if (!isset($messageText[$report->receiver_id])) {
+                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' . $report->receiver->fullname;
+            }
+        }
+
+        $mesageData = implode("\n", $messageText);
+        if (empty($mesageData)) {
+            $mesageData = $emptyText;
+        }
+        // dd($mesageData);
+        $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
     }
     public function setMyCommands()
     {
