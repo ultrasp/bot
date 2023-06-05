@@ -15,14 +15,14 @@ class MessageSendingManager
     {
         $sendingTime = Setting::getItem(Setting::SENDING_CREATE_TIME);
         $isSendingsUpdated = false;
-        // if ($sendingTime->param_value == null || (!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value)) != date('Y-m-d')) || $isChanged) {
+        if ($sendingTime->param_value == null || (!empty($sendingTime->param_value) && date('Y-m-d', strtotime($sendingTime->param_value)) != date('Y-m-d')) || $isChanged) {
             MessageSendingManager::createSendings();
             $isSendingsUpdated = true;
-        // }
+        }
         if ($isSendingsUpdated) {
             $sendingTime->setVal(date('Y-m-d H:i:s'));
         }
-        // MessageSendingManager::send();
+        MessageSendingManager::send();
     }
     public static function createSendings()
     {
