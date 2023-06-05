@@ -22,21 +22,23 @@ class TelegramManager
     const CALLBACK_HOUR = 'ct_hour';
     const CALLBACK_MINUTE = 'ct_minute';
     const MESSAGE_SELECT_HOUR = 'Ishga kelgan soatizni tanlang';
+    const MESSAGE_SELECT_LEAVE_HOUR = 'Ishni tugatgan soatingizni yozing';
     const MESSAGE_SELECT_MINUTE = 'Ishga kelgan daqiqangizni tanlang';
 
     const WORK_START = 'workStart';
     const WORK_END = 'workEnd';
 
-    public function sendHour($chat_id, $commandType,$messageId = null)
+    public function sendHour($chat_id, $commandType, $messageId = null)
     {
+        $messageText = $commandType == TelegramManager::WORK_START ? self::MESSAGE_SELECT_HOUR : self::MESSAGE_SELECT_LEAVE_HOUR;
         $date = $commandType . "_" . date('Y-m-d');
         $hourKeyboard = $this->makeHourKeyboard($date);
 
         $tgService = new TelegramService;
         if($messageId){
-            $tgService->editsendedMessage($messageId, $chat_id, self::MESSAGE_SELECT_HOUR , $hourKeyboard);
+            $tgService->editsendedMessage($messageId, $chat_id, $messageText , $hourKeyboard);
         }else{
-            $tgService->sendMessage(self::MESSAGE_SELECT_HOUR, $chat_id, $hourKeyboard, true);
+            $tgService->sendMessage($messageText, $chat_id, $hourKeyboard, true);
         }
     }
 
