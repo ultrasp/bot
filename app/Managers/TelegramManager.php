@@ -24,7 +24,8 @@ class TelegramManager
     const MESSAGE_SELECT_HOUR = 'Ishga kelgan soatizni tanlang';
     const MESSAGE_SELECT_LEAVE_HOUR = 'Ishni tugatgan soatingizni yozing';
     const MESSAGE_SELECT_MINUTE = 'Ishga kelgan daqiqangizni tanlang';
-
+    const MESSAGE_SELECT_LEAVE_MINUTE = 'Ishga tugatgan daqiqangizni tanlang';
+    
     const WORK_START = 'workStart';
     const WORK_END = 'workEnd';
 
@@ -47,7 +48,7 @@ class TelegramManager
         $date = date('Y-m-d');
         $keyboard = $this->makeMinuteKeyboard($commandType . "_" . $date . "_" . $hour);
         $tgService = new TelegramService;
-        $tgService->editsendedMessage($messageId, $chatId, self::MESSAGE_SELECT_MINUTE . ' (' . $date . ' ' . $hour . ') ', $keyboard);
+        $tgService->editsendedMessage($messageId, $chatId,( $commandType ==  TelegramManager::WORK_START  ? self::MESSAGE_SELECT_MINUTE :  self::MESSAGE_SELECT_LEAVE_MINUTE) . ' (' . $date . ' ' . $hour . ') ', $keyboard);
     }
 
     public function isCallbackQuery($update)
