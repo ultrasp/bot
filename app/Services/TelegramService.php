@@ -384,8 +384,10 @@ class TelegramService
 
         $messageText = [];
 
+        $givedReportWorkers = [];
         foreach ($reports as $key => $report) {
             $isOk = false;
+            $givedReportWorkers[$report->receiver_id] = $report->receiver_id;
             if($isCome && $report->start_hour > 0  && $report->start_minute > 0 && $report->end_hour == 0 && $report->end_minute == 0){
                 $isOk = true;
             }
@@ -400,10 +402,22 @@ class TelegramService
             }
         }
 
+
+        if(!$isCome){
+            $receivers = Receiver::getEmployees()->keyBy('id');
+            foreach ($receivers as $key => $receiver) {
+                if (!isset($givedReportWorkers[$receiver->id])) {
+                    $messageText[$receiver->id] = '@' . $receiver->username . ' ' . $receiver->fullname;
+    
+                }
+            }
+        }
+
         $mesageData = implode("\n", $messageText);
         if (empty($mesageData)) {
             $mesageData = $emptyText;
         }
+
         // dd($mesageData);
         $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
     }
