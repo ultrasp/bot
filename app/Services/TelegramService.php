@@ -398,7 +398,7 @@ class TelegramService
                 continue;
             }
             if (!isset($messageText[$report->receiver_id])) {
-                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' . $report->receiver->fullname;
+                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' . $report->receiver->fullname.' '.$report->start_hour .' '. $report->start_minute;
             }
         }
 
