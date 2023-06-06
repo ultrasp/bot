@@ -100,7 +100,7 @@ class MessageSendingManager
         foreach ($customMessagePlans as $customMPlan) {
             foreach($receivers as $receiver){
                 if ($customMPlan->canSend() && $customMPlan->canSendReceiver($receiver) ) {
-                    $status = $service->sendMessage($customMPlan->message, $receiver->chat_id);
+                    $status = $service->sendMessage($customMPlan->template, $receiver->chat_id);
                 }
             }
         }
