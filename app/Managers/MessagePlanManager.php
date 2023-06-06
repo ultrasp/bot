@@ -247,7 +247,7 @@ class MessagePlanManager
             try {
                 $savedDb = MessagePlan::newItem($template['message'], $template['time'], MessagePlan::TYPE_CUSTOM_CALLBACK, $template['chastota']);
                 $savedDb->parent_id = $comMessage->id;
-                $savedDb->parent_action_type = $template['parent_command_text'] ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER;
+                $savedDb->parent_action_type = $template['parent_command_text'] == '1' ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER;
                 $savedDb->save();
             } catch (\Throwable $th) {
                 echo $th->getMessage();
