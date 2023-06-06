@@ -200,7 +200,7 @@ class TelegramManager
 
             if ($messagePlan->type == MessagePlan::TYPE_SYSTEM && $inMessage->message_plan_id == $messagePlan->id && $inMessage->sending_id == 0) {
                 foreach ($customResponces as $customResponce) {
-                    $tgservice->sendMessage($customResponce, $writer->chat_id, $empKeyboards);
+                    $tgservice->sendMessage($customResponce->template, $writer->chat_id, $empKeyboards);
                 }
             }
         }
