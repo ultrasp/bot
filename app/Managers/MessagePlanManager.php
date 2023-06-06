@@ -66,7 +66,7 @@ class MessagePlanManager
                     'end_at' => $time[$startColumn + 4] ?? null,
                     'groups' => $time[$startColumn + 5] ?? null,
                     'parent_command_text' => $time[$startColumn - 2] ?? null,
-                    'parent_command_action' => $time[$startColumn - 1] ? ($time[$startColumn - 1] == '1' ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER) : 0
+                    'parent_command_action' => trim($time[$startColumn - 1]) != '' ? ($time[$startColumn - 1] == '1' ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER) : 0
                 ];
             }
         }
@@ -217,7 +217,6 @@ class MessagePlanManager
         $commandTemplates = MessagePlan::getAllByType(MessagePlan::TYPE_SYSTEM);
         $commandCustomCallbacks = MessagePlan::getAllByType(MessagePlan::TYPE_CUSTOM_CALLBACK);
         $notRemoveCallbacks = [];
-        // dd($templates);
         foreach ($templates as $template) {
             if (empty($template['parent_command_text'])) {
                 continue;
