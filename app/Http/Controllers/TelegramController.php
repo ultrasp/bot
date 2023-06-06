@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Managers\MessageSendingManager;
 use App\Managers\TelegramManager;
 use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
@@ -54,17 +55,17 @@ class TelegramController extends Controller
 
     public function handleManagerMessage($data = null)
     {
-        try {
-            // $data = '{"update_id":736985814,"message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":-1001524098666,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"\/officeon","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
-            $message = json_decode($data);
-            $service = new TelegramService();
-            // dd($message);
-            if (property_exists($message, 'message')) {
-                $service->managerRequestHandle($message->message->text, $message->message->chat->id);
-            }
-        } catch (\Throwable $th) {
-            //throw $th;
+        // try {
+        $data = '{"update_id":736985814,"message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":-1001524098666,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"\/officeoff","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
+        $message = json_decode($data);
+        $service = new TelegramService();
+        // dd($message);
+        if (property_exists($message, 'message')) {
+            $service->managerRequestHandle($message->message->text, $message->message->chat->id);
         }
+        // } catch (\Throwable $th) {
+        //     //throw $th;
+        // }
 
 
     }
@@ -127,7 +128,7 @@ class TelegramController extends Controller
 
 
             if ($writer && $canStoreMessage) {
-                $tgManager->makeCustomRespone($messagePlanId, $writer);
+                // $tgManager->makeCustomRespone($messagePlanId, $writer);
                 IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
                 Setting::saveParam(Setting::MAKE_REPORT, 1);
             }
@@ -202,8 +203,10 @@ class TelegramController extends Controller
 
     public function test()
     {
-        $tgManager = new TelegramManager();
-        $tgManager->sendHour(2242981, TelegramManager::WORK_START);
+        MessageSendingManager::sendCommandCallbacks();
+
+        // $tgManager = new TelegramManager();
+        // $tgManager->sendHour(2242981, TelegramManager::WORK_START);
 
         // $respHour = '{"update_id":319790904,"callback_query":{"id":"9633531428984238","from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"message":{"message_id":1612,"from":{"id":6128162329,"is_bot":true,"first_name":"Lena bot","username":"UsHelperBot"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685636529,"text":"Ishga kelgan soatizni tanlang","reply_markup":{"inline_keyboard":[[{"text":"1","callback_data":"ct_hour_workStart_2023-06-01_1"},{"text":"2","callback_data":"ct_hour_workStart_2023-06-01_2"},{"text":"3","callback_data":"ct_hour_workStart_2023-06-01_3"},{"text":"4","callback_data":"ct_hour_workStart_2023-06-01_4"},{"text":"5","callback_data":"ct_hour_workStart_2023-06-01_5"},{"text":"6","callback_data":"ct_hour_workStart_2023-06-01_6"}],[{"text":"7","callback_data":"ct_hour_workStart_2023-06-01_7"},{"text":"8","callback_data":"ct_hour_workStart_2023-06-01_8"},{"text":"9","callback_data":"ct_hour_workStart_2023-06-01_9"},{"text":"10","callback_data":"ct_hour_workStart_2023-06-01_10"},{"text":"11","callback_data":"ct_hour_workStart_2023-06-01_11"},{"text":"12","callback_data":"ct_hour_workStart_2023-06-01_12"}],[{"text":"13","callback_data":"ct_hour_workStart_2023-06-01_13"},{"text":"14","callback_data":"ct_hour_workStart_2023-06-01_14"},{"text":"15","callback_data":"ct_hour_workStart_2023-06-01_15"},{"text":"16","callback_data":"ct_hour_workStart_2023-06-01_16"},{"text":"17","callback_data":"ct_hour_workStart_2023-06-01_17"},{"text":"18","callback_data":"ct_hour_workStart_2023-06-01_18"}],[{"text":"19","callback_data":"ct_hour_workStart_2023-06-01_19"},{"text":"20","callback_data":"ct_hour_workStart_2023-06-01_20"},{"text":"21","callback_data":"ct_hour_workStart_2023-06-01_21"},{"text":"22","callback_data":"ct_hour_workStart_2023-06-01_22"},{"text":"23","callback_data":"ct_hour_workStart_2023-06-01_23"},{"text":"24","callback_data":"ct_hour_workStart_2023-06-01_24"}]]}},"chat_instance":"5520022277978860643","data":"ct_hour_workStart_2023-06-01_8"}}';
         // $resp = '{"update_id":319790808,"callback_query":{"id":"9633532709402750","from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"message":{"message_id":1452,"from":{"id":6128162329,"is_bot":true,"first_name":"Lena bot","username":"UsHelperBot"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685581669,"text":"Ishga kelgan soatizni tanlang","reply_markup":{"inline_keyboard":[[{"text":"1","callback_data":"ct_hour_2023-06-01_1"},{"text":"2","callback_data":"ct_hour_2023-06-01_2"},{"text":"3","callback_data":"ct_hour_2023-06-01_3"},{"text":"4","callback_data":"ct_hour_2023-06-01_4"},{"text":"5","callback_data":"ct_hour_2023-06-01_5"},{"text":"6","callback_data":"ct_hour_2023-06-01_6"}],[{"text":"7","callback_data":"ct_hour_2023-06-01_7"},{"text":"8","callback_data":"ct_hour_2023-06-01_8"},{"text":"9","callback_data":"ct_hour_2023-06-01_9"},{"text":"10","callback_data":"ct_hour_2023-06-01_10"},{"text":"11","callback_data":"ct_hour_2023-06-01_11"},{"text":"12","callback_data":"ct_hour_2023-06-01_12"}],[{"text":"13","callback_data":"ct_hour_2023-06-01_13"},{"text":"14","callback_data":"ct_hour_2023-06-01_14"},{"text":"15","callback_data":"ct_hour_2023-06-01_15"},{"text":"16","callback_data":"ct_hour_2023-06-01_16"},{"text":"17","callback_data":"ct_hour_2023-06-01_17"},{"text":"18","callback_data":"ct_hour_2023-06-01_18"}],[{"text":"19","callback_data":"ct_hour_2023-06-01_19"},{"text":"20","callback_data":"ct_hour_2023-06-01_20"},{"text":"21","callback_data":"ct_hour_2023-06-01_21"},{"text":"22","callback_data":"ct_hour_2023-06-01_22"},{"text":"23","callback_data":"ct_hour_2023-06-01_23"},{"text":"24","callback_data":"ct_hour_2023-06-01_24"}]]}},"chat_instance":"5520022277978860643","data":"ct_hour_2023-06-01_10"}}';

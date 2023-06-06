@@ -180,29 +180,30 @@ class TelegramManager
         $this->sendHour($chat_id, $command == TelegramService::COMMAND_COME_TIME ? TelegramManager::WORK_START : self::WORK_END);
     }
 
-    public function makeCustomRespone($messagePlanId, $writer)
-    {
-        if ($messagePlanId == 0) {
-            return;
-        }
-        $customResponces = MessagePlan::where([
-            'type' => MessagePlan::TYPE_CUSTOM_CALLBACK,
-            'parent_id' => $messagePlanId,
-            'parent_action_type' => MessagePlan::PARENT_ACTION_TYPE_RESPONCED
-        ])->get();
 
-        if (!empty($customResponces)) {
-            $inMessage = IncomeMessage::where('writer_id', $writer->id)->latest()->first();
-            $messagePlan = MessagePlan::where('id', $messagePlanId)->first();
+    // public function makeCustomRespone($messagePlanId, $writer)
+    // {
+    //     if ($messagePlanId == 0) {
+    //         return;
+    //     }
+    //     $customResponces = MessagePlan::where([
+    //         'type' => MessagePlan::TYPE_CUSTOM_CALLBACK,
+    //         'parent_id' => $messagePlanId,
+    //         'parent_action_type' => MessagePlan::PARENT_ACTION_TYPE_RESPONCED
+    //     ])->get();
 
-            $tgservice = new TelegramService();
-            $empKeyboards = $tgservice->getEmpKeyboard();
+    //     if (!empty($customResponces)) {
+    //         $inMessage = IncomeMessage::where('writer_id', $writer->id)->latest()->first();
+    //         $messagePlan = MessagePlan::where('id', $messagePlanId)->first();
 
-            if ($messagePlan->type == MessagePlan::TYPE_SYSTEM && $inMessage->message_plan_id == $messagePlan->id && $inMessage->sending_id == 0) {
-                foreach ($customResponces as $customResponce) {
-                    $tgservice->sendMessage($customResponce->template, $writer->chat_id, $empKeyboards);
-                }
-            }
-        }
-    }
+    //         $tgservice = new TelegramService();
+    //         $empKeyboards = $tgservice->getEmpKeyboard();
+
+    //         if ($messagePlan->type == MessagePlan::TYPE_SYSTEM && $inMessage->message_plan_id == $messagePlan->id && $inMessage->sending_id == 0) {
+    //             foreach ($customResponces as $customResponce) {
+    //                 $tgservice->sendMessage($customResponce->template, $writer->chat_id, $empKeyboards);
+    //             }
+    //         }
+    //     }
+    // }
 }

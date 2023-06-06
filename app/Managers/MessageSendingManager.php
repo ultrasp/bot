@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
@@ -23,7 +24,7 @@ class MessageSendingManager
             $sendingTime->setVal(date('Y-m-d H:i:s'));
         }
         MessageSendingManager::send();
-        MessageSendingManager::sendUnfilledCommands();
+        MessageSendingManager::sendCommandCallbacks();
     }
     public static function createSendings()
     {
@@ -78,29 +79,47 @@ class MessageSendingManager
     }
 
 
-    public static function sendUnfilledCommands()
+    public static function sendCommandCallbacks()
     {
-        $curMinute = date('H')*60 + date('i');
+        $curMinute = date('H') * 60 + date('i');
 
         $customMessagePlans = MessagePlan::where([
-                'type' => MessagePlan::TYPE_CUSTOM_CALLBACK,
-                'parent_action_type' => MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER,
-                'sendUnfilledCommands' => $curMinute
-            ])
+            'type' => MessagePlan::TYPE_CUSTOM_CALLBACK,
+            'send_minute' => $curMinute
+        ])
             // ->whereRaw('send_minute =  "' . $curMinute . '"')
-            ->whereRaw('exists (select 1 from message_plans p where p.parent_id = message_plans.id and type = '.MessagePlan::TYPE_SYSTEM.')')
+            ->whereRaw('exists (select 1 from message_plans p where p.id = message_plans.parent_id and type = ' . MessagePlan::TYPE_SYSTEM . ')')
             ->get();
 
-        if(empty($customMessagePlans)){
+        if (empty($customMessagePlans)) {
             return;
         }
         $service = new TelegramService();
         $receivers = Receiver::getEmployees(['groups']);
 
         foreach ($customMessagePlans as $customMPlan) {
-            foreach($receivers as $receiver){
-                if ($customMPlan->canSend() && $customMPlan->canSendReceiver($receiver) ) {
-                    $status = $service->sendMessage($customMPlan->template, $receiver->chat_id);
+
+            $incomes = IncomeMessage::where([
+                'message_plan_id' => $customMPlan->parent_id,
+            ])
+                ->where('sending_id', '!=', 0)
+                ->get()
+                ->groupBy('writer_id');
+
+
+            foreach ($receivers as $receiver) {
+                $canSend = false;
+
+                if ($customMPlan->parent_action_type == MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER && !$incomes->has($receiver->id)) {
+                    $canSend = true;
+                }
+
+                if ($customMPlan->parent_action_type == MessagePlan::PARENT_ACTION_TYPE_RESPONCED && $incomes->has($receiver->id)) {
+                    $canSend = true;
+                }
+
+                if ($canSend && $customMPlan->canSend() && $customMPlan->canSendReceiver($receiver)) {
+                    $service->sendMessage($customMPlan->template, $receiver->chat_id);
                 }
             }
         }
