@@ -23,6 +23,7 @@ class MessageSendingManager
             $sendingTime->setVal(date('Y-m-d H:i:s'));
         }
         MessageSendingManager::send();
+        MessageSendingManager::sendUnfilledCommands();
     }
     public static function createSendings()
     {
@@ -77,4 +78,31 @@ class MessageSendingManager
     }
 
 
+    public static function sendUnfilledCommands()
+    {
+        $curMinute = date('H')*60 + date('i');
+
+        $customMessagePlans = MessagePlan::where([
+                'type' => MessagePlan::TYPE_CUSTOM_CALLBACK,
+                'parent_action_type' => MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER,
+                'sendUnfilledCommands' => $curMinute
+            ])
+            // ->whereRaw('send_minute =  "' . $curMinute . '"')
+            ->whereRaw('exists (select 1 from message_plans p where p.parent_id = message_plans.id and type = '.MessagePlan::TYPE_SYSTEM.')')
+            ->get();
+
+        if(empty($customMessagePlans)){
+            return;
+        }
+        $service = new TelegramService();
+        $receivers = Receiver::getEmployees(['groups']);
+
+        foreach ($customMessagePlans as $customMPlan) {
+            foreach($receivers as $receiver){
+                if ($customMPlan->canSend() && $customMPlan->canSendReceiver($receiver) ) {
+                    $status = $service->sendMessage($customMPlan->message, $receiver->chat_id);
+                }
+            }
+        }
+    }
 }

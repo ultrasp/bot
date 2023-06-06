@@ -75,7 +75,7 @@ class TelegramController extends Controller
             $service = new TelegramService();
             $tgManager = new TelegramManager();
             // dd($data);
-            if($tgManager->isCallbackQuery($message)){
+            if ($tgManager->isCallbackQuery($message)) {
                 $tgManager->handleCallbackQuery($message);
                 return;
             }
@@ -95,9 +95,9 @@ class TelegramController extends Controller
                 // Receiver::writeToSheet();
             }
 
-            $subCommand = substr($message->message->text,1);
-            if ( $tgManager->isWorkTimeCommand($subCommand)) {
-                $tgManager->sendWorkTime($subCommand,$writer->chat_id);
+            $subCommand = substr($message->message->text, 1);
+            if ($tgManager->isWorkTimeCommand($subCommand)) {
+                $tgManager->sendWorkTime($subCommand, $writer->chat_id);
                 return;
             }
 
@@ -110,7 +110,7 @@ class TelegramController extends Controller
                     $service->sendMessage('Please choose commands', $writer->chat_id, $service->getEmpKeyboard());
                 }
             }
-            // dd($message->message->text);
+
             if (!empty($writer) && $messagePlanId == 0) {
                 $sending = MessageSending::getLatestSendByWorkerId($writer->id);
                 // dd($sending);
@@ -127,6 +127,7 @@ class TelegramController extends Controller
 
 
             if ($writer && $canStoreMessage) {
+                $tgManager->makeCustomRespone($messagePlanId, $writer);
                 IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
                 Setting::saveParam(Setting::MAKE_REPORT, 1);
             }
