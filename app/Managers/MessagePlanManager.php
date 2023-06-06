@@ -66,7 +66,7 @@ class MessagePlanManager
                     'end_at' => $time[$startColumn + 4] ?? null,
                     'groups' => $time[$startColumn + 5] ?? null,
                     'parent_command_text' => $time[$startColumn - 2] ?? null,
-                    'parent_command_action' => $time[$startColumn - 1] ?? 0
+                    'parent_command_action' => $time[$startColumn - 1] ? ($time[$startColumn - 1] == '1' ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER) : 0
                 ];
             }
         }
@@ -195,6 +195,7 @@ class MessagePlanManager
                 }
             }
             if (!empty($savedDb)) {
+                // dd($template['groups']);
                 $savedDb->attachReceviers($template['groups']);
             }
         }
@@ -230,9 +231,10 @@ class MessagePlanManager
             if (empty($comMessage)) {
                 continue;
             }
+            // dd($template);
             $savedDb = null;
             $savedDb = $commandCustomCallbacks->first(function ($dbTemplate) use ($template, $comMessage) {
-                return ($dbTemplate->parent_action_type == $template['parent_command_action'] ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER)
+                return $dbTemplate->parent_action_type == $template['parent_command_action']
                     && $dbTemplate->parent_id == $comMessage->id
                     && $dbTemplate->send_minute == $template['time']
                     && $dbTemplate->send_groups == $template['groups']
@@ -246,8 +248,17 @@ class MessagePlanManager
 
             try {
                 $savedDb = MessagePlan::newItem($template['message'], $template['time'], MessagePlan::TYPE_CUSTOM_CALLBACK, $template['chastota']);
+                if ($savedDb->chastota == MessagePlan::CHASTOTA_RANGE_DAY) {
+                    $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
+                    $end = Carbon::createFromFormat('d.m.Y', $template['end_at']);
+                    $savedDb->setRange($start->format('Y-m-d'), $end->format('Y-m-d'));
+                }
+                if ($savedDb->chastota == MessagePlan::CHASTOTA_ONE_DAY) {
+                    $start = Carbon::createFromFormat('d.m.Y', $template['start_at']);
+                    $savedDb->setRange($start->format('Y-m-d'), null);
+                }
                 $savedDb->parent_id = $comMessage->id;
-                $savedDb->parent_action_type = $template['parent_command_text'] == '1' ? MessagePlan::PARENT_ACTION_TYPE_RESPONCED : MessagePlan::PARENT_ACTION_TYPE_NOT_ANSWER;
+                $savedDb->parent_action_type = $template['parent_command_action'];
                 $savedDb->save();
             } catch (\Throwable $th) {
                 echo $th->getMessage();

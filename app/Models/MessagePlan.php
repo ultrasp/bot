@@ -77,7 +77,10 @@ class MessagePlan extends Model
         if (!empty($receviers)) {
             if (str_starts_with($receviers, '@')) {
                 $receiver = Receiver::getByUsername(substr($receviers, 1));
-                $this->receivers()->sync([$receiver->id]);
+                if(!empty($receiver) && $receiver->id){
+                    // dd($receiver->id);
+                    $this->receivers()->sync([$receiver->id]);
+                }
             } else {
                 $receiveGroupCodes = explode(",", $receviers);
                 $receiverIds = [];
