@@ -56,7 +56,7 @@ class TelegramController extends Controller
     public function handleManagerMessage($data = null)
     {
         // try {
-        $data = '{"update_id":736985814,"message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":-1001524098666,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"\/officeoff","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
+        // $data = '{"update_id":736985814,"message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":-1001524098666,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"\/officeoff","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
         $message = json_decode($data);
         $service = new TelegramService();
         // dd($message);
