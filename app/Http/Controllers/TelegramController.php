@@ -37,8 +37,9 @@ class TelegramController extends Controller
         //     }
         // }
         // dd($telegrams);
-        $update = TelegramUpdate::where(['id' => 1514])->first();
-        $data = $update->update_json;
+        // $update = TelegramUpdate::where(['id' => 1514])->first();
+        // $data = $update->update_json;
+        $data = '{"update_id":319791533,"message":{"message_id":2479,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1686152394,"photo":[{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADcwADLwQ","file_unique_id":"AQADDMwxG0NeCEh4","file_size":994,"width":90,"height":51},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADbQADLwQ","file_unique_id":"AQADDMwxG0NeCEhy","file_size":14226,"width":320,"height":180},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeAADLwQ","file_unique_id":"AQADDMwxG0NeCEh9","file_size":66357,"width":800,"height":450},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeQADLwQ","file_unique_id":"AQADDMwxG0NeCEh-","file_size":134407,"width":1280,"height":720}]}}';
         // $data = '{"update_id":319789677,"message":{"message_id":154,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684568282,"text":"\/come_time","entities":[{"offset":0,"length":10,"type":"bot_command"}]}}';
         // $data = '{"update_id":319789691,"message":{"message_id":176,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684656933,"text":"/come_time"}}';
         // dd($data);
@@ -80,9 +81,18 @@ class TelegramController extends Controller
                 $tgManager->handleCallbackQuery($message);
                 return;
             }
-            if (!property_exists($message, 'message')) {
+
+            if(!property_exists($message, 'message')){
                 return;
             }
+            $isTextMessage = property_exists($message->message, 'message');
+            $isContactMessage = property_exists($message->message, 'contact');
+            $isFileMessage = $tgManager->isFileMessage($message);
+
+            if (!$isTextMessage && !$isFileMessage && !$isContactMessage) {
+                return;
+            }
+
             $canStoreMessage = false;
             $writer = null;
             $messagePlanId = 0;
@@ -96,13 +106,15 @@ class TelegramController extends Controller
                 // Receiver::writeToSheet();
             }
 
-            $subCommand = substr($message->message->text, 1);
-            if ($tgManager->isWorkTimeCommand($subCommand)) {
-                $tgManager->sendWorkTime($subCommand, $writer->chat_id);
-                return;
+            if ($isTextMessage) {
+                $subCommand = substr($message->message->text, 1);
+                if ($tgManager->isWorkTimeCommand($subCommand)) {
+                    $tgManager->sendWorkTime($subCommand, $writer->chat_id);
+                    return;
+                }
             }
 
-            if (property_exists($message->message, 'text')) { //income commands
+            if ($isTextMessage) { //income commands
                 $messagePlanId = $service->getCommandPlanId($message->message->text);
                 $command = $message->message->text;
                 $isCommand = $messagePlanId > 0;
@@ -119,18 +131,19 @@ class TelegramController extends Controller
                 $messagePlanId = $sending ? $sending->message_plan_id : null;
                 $isCommand = !empty($command) ? true : false;
                 if (!empty($sending) && empty($sending->answer_time)) {
-
                     $sending->answer_time = date('Y-m-d H:i:s');
                     $sending->save();
-
                 }
             }
 
 
             if ($writer && $canStoreMessage) {
                 // $tgManager->makeCustomRespone($messagePlanId, $writer);
-                IncomeMessage::storeData($message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
-                Setting::saveParam(Setting::MAKE_REPORT, 1);
+                $messageText = $tgManager->getTgMessage($message);
+                if (!empty($messageText)) {
+                    IncomeMessage::storeData($messageText, $message, $writer->id, $sending ? $sending->id : 0, $messagePlanId);
+                    Setting::saveParam(Setting::MAKE_REPORT, 1);
+                }
             }
 
             // if (in_array(substr($message->message->text, 1), TelegramService::getManagerBotAsks()) && $message->message->chat->id == TelegramService::MANAGER_GROUP_ID) {
@@ -203,7 +216,9 @@ class TelegramController extends Controller
 
     public function test()
     {
-        MessageSendingManager::sendCommandCallbacks();
+        $tgManager = new TelegramManager();
+        $tgManager->forwardMessage();
+        // MessageSendingManager::sendCommandCallbacks();
 
         // $tgManager = new TelegramManager();
         // $tgManager->sendHour(2242981, TelegramManager::WORK_START);

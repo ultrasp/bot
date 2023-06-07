@@ -24,6 +24,7 @@ class TelegramService
 
     const TELEGRAM_URL = 'https://api.telegram.org/bot';
 
+    const FILES_CHAT_ID = '-1001810312998';
     public function __construct()
     {
         $this->client = new Client();
@@ -104,6 +105,20 @@ class TelegramService
         $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/editMessageText', ['json' => $params]);
 
         $body = $response->getBody()->getContents();
+        return json_decode($body);
+    }
+    public function forwardMessage($chat_id, $from_chat_id, $message_id , $protect_content = false)
+    {
+        $params = [
+            'chat_id' => $chat_id,
+            'from_chat_id' => $from_chat_id,
+            'message_id' => $message_id,
+            'protect_content' => $protect_content,
+        ];
+        $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/forwardMessage', ['json' => $params]);
+
+        $body = $response->getBody()->getContents();
+        // var_dump($body);
         return json_decode($body);
     }
 

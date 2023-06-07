@@ -180,7 +180,41 @@ class TelegramManager
         $this->sendHour($chat_id, $command == TelegramService::COMMAND_COME_TIME ? TelegramManager::WORK_START : self::WORK_END);
     }
 
+    public function isFileMessage($tUpdate){
+        $filesProps = ['photo','document','video','audio','animation'];
+        $isFile = false;
+        foreach ($filesProps as $key => $prop) {
+            if (property_exists($tUpdate->message, $prop)) {
+                $isFile = true;
+                break;
+            }
+        }
+        return $isFile;
+    }
+    public function forwardMessage($tUpdate = null)
+    {
+        $tUpdate = '{"update_id":319791533,"message":{"message_id":2479,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1686152394,"photo":[{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADcwADLwQ","file_unique_id":"AQADDMwxG0NeCEh4","file_size":994,"width":90,"height":51},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADbQADLwQ","file_unique_id":"AQADDMwxG0NeCEhy","file_size":14226,"width":320,"height":180},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeAADLwQ","file_unique_id":"AQADDMwxG0NeCEh9","file_size":66357,"width":800,"height":450},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeQADLwQ","file_unique_id":"AQADDMwxG0NeCEh-","file_size":134407,"width":1280,"height":720}]}}';
+        $tUpdate = json_decode($tUpdate);
+        $tgService = new TelegramService();
+        $responce = $tgService->forwardMessage(TelegramService::FILES_CHAT_ID, $tUpdate->message->chat->id, $tUpdate->message->message_id);
+        $url = 'https://t.me/c/'.substr(TelegramService::FILES_CHAT_ID,4).'/'.$responce->result->message_id;
+        return $url;
+    }
 
+    public function getTgMessage($tgUpdate){
+        $messageText = null;
+        if (property_exists($tgUpdate->message, 'text')) {
+            $messageText = $tgUpdate->message->text;
+        }
+        if (property_exists($tgUpdate->message, 'contact')) {
+            $messageText = $tgUpdate->message->contact->phone_number;
+        }
+
+        if ($this->isFileMessage($tgUpdate)) {
+            $messageText = $this->forwardMessage($tgUpdate);
+        }
+        return $messageText;
+    }
     // public function makeCustomRespone($messagePlanId, $writer)
     // {
     //     if ($messagePlanId == 0) {
