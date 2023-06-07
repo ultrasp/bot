@@ -85,7 +85,7 @@ class TelegramController extends Controller
             if(!property_exists($message, 'message')){
                 return;
             }
-            $isTextMessage = property_exists($message->message, 'message');
+            $isTextMessage = property_exists($message->message, 'text');
             $isContactMessage = property_exists($message->message, 'contact');
             $isFileMessage = $tgManager->isFileMessage($message);
 
