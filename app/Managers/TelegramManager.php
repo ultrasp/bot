@@ -193,11 +193,12 @@ class TelegramManager
     }
     public function forwardMessage($tUpdate = null)
     {
-        $tUpdate = '{"update_id":319791533,"message":{"message_id":2479,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1686152394,"photo":[{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADcwADLwQ","file_unique_id":"AQADDMwxG0NeCEh4","file_size":994,"width":90,"height":51},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADbQADLwQ","file_unique_id":"AQADDMwxG0NeCEhy","file_size":14226,"width":320,"height":180},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeAADLwQ","file_unique_id":"AQADDMwxG0NeCEh9","file_size":66357,"width":800,"height":450},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeQADLwQ","file_unique_id":"AQADDMwxG0NeCEh-","file_size":134407,"width":1280,"height":720}]}}';
+        // $tUpdate = '{"update_id":319791824,"message":{"message_id":2799,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1686455277,"photo":[{"file_id":"AgACAgIAAxkBAAIK72SFQ-wJEdPZj9HsnH8AAXuZ8Oqa-QACm8wxG0dqKUgQqRxybRKa-wEAAwIAA3MAAy8E","file_unique_id":"AQADm8wxG0dqKUh4","file_size":914,"width":90,"height":51},{"file_id":"AgACAgIAAxkBAAIK72SFQ-wJEdPZj9HsnH8AAXuZ8Oqa-QACm8wxG0dqKUgQqRxybRKa-wEAAwIAA20AAy8E","file_unique_id":"AQADm8wxG0dqKUhy","file_size":11255,"width":320,"height":180},{"file_id":"AgACAgIAAxkBAAIK72SFQ-wJEdPZj9HsnH8AAXuZ8Oqa-QACm8wxG0dqKUgQqRxybRKa-wEAAwIAA3gAAy8E","file_unique_id":"AQADm8wxG0dqKUh9","file_size":50145,"width":800,"height":450},{"file_id":"AgACAgIAAxkBAAIK72SFQ-wJEdPZj9HsnH8AAXuZ8Oqa-QACm8wxG0dqKUgQqRxybRKa-wEAAwIAA3kAAy8E","file_unique_id":"AQADm8wxG0dqKUh-","file_size":97504,"width":1280,"height":720}]}}';
         $tUpdate = json_decode($tUpdate);
         $tgService = new TelegramService();
-        $responce = $tgService->forwardMessage(TelegramService::FILES_CHAT_ID, $tUpdate->message->chat->id, $tUpdate->message->message_id);
-        $url = 'https://t.me/c/'.substr(TelegramService::FILES_CHAT_ID,4).'/'.$responce->result->message_id;
+        // $tgService->sendBotId = TelegramService::MANAGER_BOT_ID;
+        $responce = $tgService->forwardMessage(TelegramService::MANAGER_GROUP_ID, $tUpdate->message->chat->id, $tUpdate->message->message_id);
+        $url = 'https://t.me/c/'.substr(TelegramService::MANAGER_GROUP_ID,4).'/'.$responce->result->message_id;
         return $url;
     }
 
