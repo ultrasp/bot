@@ -7,6 +7,7 @@ use App\Models\MessagePlan;
 use App\Models\MessageSending;
 use App\Models\Receiver;
 use App\Models\Setting;
+use App\Models\WorkReport;
 use App\Services\TelegramService;
 
 class MessageSendingManager
@@ -99,12 +100,34 @@ class MessageSendingManager
 
         foreach ($customMessagePlans as $customMPlan) {
 
-            $incomes = IncomeMessage::where([
-                'message_plan_id' => $customMPlan->parent_id,
-            ])
-                ->where('sending_id', '!=', 0)
-                ->get()
-                ->groupBy('writer_id');
+            $parentPlan = MessagePlan::where('id',$customMPlan->parent_id)->first();
+            if( in_array(substr($parentPlan->template,1),[TelegramService::COMMAND_COME_TIME,TelegramService::COMMAND_LEAVE_WORK])){
+                $incomes = WorkReport::where([
+                    'date' => date('Y-m-d'),
+                    'type' => 1 
+                    ])
+                    ->get();
+
+                $incomes =  $incomes->filter(function ($income) use($parentPlan) {
+                        if("/".$parentPlan->template == TelegramService::COMMAND_COME_TIME && $income->start_hour + $income->start_minute > 0){
+                            return true;
+                        }
+                        if("/".$parentPlan->template == TelegramService::COMMAND_LEAVE_WORK && $income->end_hour + $income->end_minute > 0){
+                            return true;
+                        }
+                        return false;
+                });
+                $incomes = $incomes->groupBy('receiver_id');
+
+            }else{
+                $incomes = IncomeMessage::where([
+                    'message_plan_id' => $customMPlan->parent_id,
+                ])
+                    ->where('sending_id', '!=', 0)
+                    ->get()
+                    ->groupBy('writer_id');
+    
+            }
 
 
             foreach ($receivers as $receiver) {
