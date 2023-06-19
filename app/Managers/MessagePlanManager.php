@@ -25,12 +25,12 @@ class MessagePlanManager
         $encodeData = md5(serialize($times));
 
         // dd($setting);
-        // if ($setting->param_value == $encodeData) {
-        //     return 0;
-        // } else {
-        //     $setting->param_value = $encodeData;
-        //     $setting->save();
-        // }
+        if ($setting->param_value == $encodeData) {
+            return 0;
+        } else {
+            $setting->param_value = $encodeData;
+            $setting->save();
+        }
         // dd($times);
         $templates = [];
         $startColumn = self::START_COLUMN;
