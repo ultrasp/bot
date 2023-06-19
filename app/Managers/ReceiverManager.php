@@ -31,12 +31,12 @@ class ReceiverManager
 
         $encodeData = md5(serialize($users));
 
-        // if ($setting->param_value == $encodeData) {
-        //     return 0;
-        // } else {
-        //     $setting->param_value = $encodeData;
-        //     $setting->save();
-        // }
+        if ($setting->param_value == $encodeData) {
+            return 0;
+        } else {
+            $setting->param_value = $encodeData;
+            $setting->save();
+        }
 
         $userTypeColNumber = 3;
 
