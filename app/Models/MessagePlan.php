@@ -151,19 +151,23 @@ class MessagePlan extends Model
     }
 
 
-    public function canSend()
+    public function canSend($date = null)
     {
+        if(empty($date)){
+            $date = date('Y-m-d');
+        }
+        $weekDay = date('D',strtotime($date));
         $canSend = false;
         if ($this->chastota == MessagePlan::CHASTOTA_DAILY) {
             $canSend = true;
         }
-        if ($this->chastota == MessagePlan::CHASTOTA_WORK_DAYS && date('D') != 'Sun') {
+        if ($this->chastota == MessagePlan::CHASTOTA_WORK_DAYS && $weekDay != 'Sun') {
             $canSend = true;
         }
-        if ($this->chastota == MessagePlan::CHASTOTA_RANGE_DAY && $this->start_at >= date('Y-m-d') && $this->end_at <= date('Y-m-d')) {
+        if ($this->chastota == MessagePlan::CHASTOTA_RANGE_DAY && $this->start_at >= $date && $this->end_at <= $date) {
             $canSend = true;
         }
-        if ($this->chastota == MessagePlan::CHASTOTA_ONE_DAY && $this->start_at == date('Y-m-d')) {
+        if ($this->chastota == MessagePlan::CHASTOTA_ONE_DAY && $this->start_at == $date) {
             $canSend = true;
         }
         return $canSend;

@@ -83,7 +83,7 @@ class MessageSendingManager
     public static function sendCommandCallbacks()
     {
         $curMinute = date('H') * 60 + date('i');
-
+        $date = date('Y-m-d');
         $customMessagePlans = MessagePlan::where([
             'type' => MessagePlan::TYPE_CUSTOM_CALLBACK,
             'send_minute' => $curMinute
@@ -97,28 +97,26 @@ class MessageSendingManager
         }
         $service = new TelegramService();
         $receivers = Receiver::getEmployees(['groups']);
-
         foreach ($customMessagePlans as $customMPlan) {
 
             $parentPlan = MessagePlan::where('id',$customMPlan->parent_id)->first();
-            if( in_array(substr($parentPlan->template,1),[TelegramService::COMMAND_COME_TIME,TelegramService::COMMAND_LEAVE_WORK])){
+            $clearedCommand = substr($parentPlan->template,1); 
+            if( in_array($clearedCommand,[TelegramService::COMMAND_COME_TIME,TelegramService::COMMAND_LEAVE_WORK])){
                 $incomes = WorkReport::where([
-                    'date' => date('Y-m-d'),
+                    'date' => $date,
                     'type' => 1 
                     ])
                     ->get();
-
-                $incomes =  $incomes->filter(function ($income) use($parentPlan) {
-                        if("/".$parentPlan->template == TelegramService::COMMAND_COME_TIME && $income->start_hour + $income->start_minute > 0){
+                $incomes =  $incomes->filter(function ($income) use($clearedCommand) {
+                        if($clearedCommand == TelegramService::COMMAND_COME_TIME && $income->start_hour + $income->start_minute > 0){
                             return true;
                         }
-                        if("/".$parentPlan->template == TelegramService::COMMAND_LEAVE_WORK && $income->end_hour + $income->end_minute > 0){
+                        if($clearedCommand == TelegramService::COMMAND_LEAVE_WORK && $income->end_hour + $income->end_minute > 0){
                             return true;
                         }
                         return false;
                 });
                 $incomes = $incomes->groupBy('receiver_id');
-
             }else{
                 $incomes = IncomeMessage::where([
                     'message_plan_id' => $customMPlan->parent_id,
@@ -129,7 +127,7 @@ class MessageSendingManager
     
             }
 
-
+            $senders = [];
             foreach ($receivers as $receiver) {
                 $canSend = false;
 
@@ -141,8 +139,14 @@ class MessageSendingManager
                     $canSend = true;
                 }
 
-                if ($canSend && $customMPlan->canSend() && $customMPlan->canSendReceiver($receiver)) {
-                    $service->sendMessage($customMPlan->template, $receiver->chat_id);
+                if ($canSend && $customMPlan->canSend($date) && $customMPlan->canSendReceiver($receiver)) {
+                    $senders[] = $receiver;
+                }
+            }
+
+            if(!empty($senders)){
+                foreach ($senders as $sender) {
+                    $service->sendMessage($customMPlan->template, $sender->chat_id);
                 }
             }
         }
