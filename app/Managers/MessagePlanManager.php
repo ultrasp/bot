@@ -125,10 +125,10 @@ class MessagePlanManager
                         $dayWorkReport = $workReports->get($key);
                         if ($dayWorkReport) {
                             if ($command == TelegramService::COMMAND_COME_TIME) {
-                                $messageText = $dayWorkReport->start_hour . ':' . $dayWorkReport->start_minute;
+                                $messageText = str_pad($dayWorkReport->start_hour,2,"0",STR_PAD_LEFT) . ':' . str_pad($dayWorkReport->start_minute,"0",STR_PAD_LEFT);
                             }
                             if ($command == TelegramService::COMMAND_LEAVE_WORK) {
-                                $messageText = $dayWorkReport->end_hour . ':' . $dayWorkReport->end_minute;
+                                $messageText = str_pad($dayWorkReport->end_hour,2,"0",STR_PAD_LEFT) . ':' . str_pad($dayWorkReport->end_minute,2,"0",STR_PAD_LEFT);
                             }
                             if ($command == TelegramService::COMMAND_TOTAL_WORK_TIME) {
                                 $messageText = $dayWorkReport->total;
