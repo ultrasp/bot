@@ -108,8 +108,10 @@ class MessagePlanManager
                 return $item->date . '_' . $item->receiver_id;
             });
         }
+        $nameRows = [];
         foreach ($receivers as $receiver) {
             $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
+            $nameRows[] = count($data) - 1;
             foreach ($plans as $plan) {
                 $row = [
                     ($isBotCommand ? '' : $plan->covertToString()) . ' ' . $plan->template
@@ -152,6 +154,8 @@ class MessagePlanManager
         }
         $service->deleteRows($newSheetName);
         $service->writeValues($newSheetName, array_values($data));
+        $sheetId = $service->getSheetIdByTitle($newSheetName);
+        $service->updateBackgroundRows($sheetId,$nameRows);
     }
 
     public static function saveTemplates($templates)

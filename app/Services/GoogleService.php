@@ -71,6 +71,20 @@ class GoogleService
         }
     }
 
+    public function getSheetIdByTitle($sheetName)
+    {
+        $sheetInfo = $this->service->spreadsheets->get(self::SPREADSHEET_ID);
+        $allsheet_info = $sheetInfo['sheets'];
+        $idCats = array_column($allsheet_info, 'properties');
+        $sheetId = null;
+        foreach($idCats as $sheet){
+            if($sheet->title == $sheetName){
+                $sheetId = $sheet->sheetId;
+            }
+        }
+        return $sheetId;
+    }
+
     function checkSheetArray(array $myArray, $word)
     {
         foreach ($myArray as $element) {
@@ -139,4 +153,79 @@ class GoogleService
         // dd($result);
     }
 
+    public function updateBackgroundRows($sheetId = 177811107,$rowIndexes=[])
+    {
+    $arr = [];
+    $arr[] = ['repeatCell' => [
+        "range" => [
+        "sheetId" => $sheetId,
+        ],
+        "cell" => [
+        "userEnteredFormat" => [
+            "backgroundColor" => [
+            "red" => 1.0,
+            "green" => 1.0,
+            "blue" => 1.0
+            ],
+        ]
+        ],
+        "fields" => "userEnteredFormat(backgroundColor)"
+    ]];
+    foreach ($rowIndexes as $index) {
+            $arr[] = ['repeatCell' => [
+                "range" => [
+                "sheetId" => $sheetId,
+                "startRowIndex" => $index+1,
+                "endRowIndex" => $index +2
+                ],
+                "cell" => [
+                "userEnteredFormat" => [
+                    "backgroundColor" => [
+                    "red" => 0.6,
+                    "green" => 0.8,
+                    "blue" => 1.0
+                    ],
+                ]
+                ],
+                "fields" => "userEnteredFormat(backgroundColor)"
+            ]];
+        }
+        $arr = ['requests' => $arr];
+
+        $body = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest($arr);
+
+        $result = $this->service->spreadsheets->batchUpdate(self::SPREADSHEET_ID, $body);
+        // dd($result);
+    }
+
+    public function updateBackground()
+    {
+
+        $body = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest(
+            [
+                'requests' => [
+                    'repeatCell' => [
+                        "range" => [
+                          "sheetId" => 962102522,
+                          "startRowIndex" => 0,
+                          "endRowIndex" => 1
+                        ],
+                        "cell" => [
+                          "userEnteredFormat" => [
+                            "backgroundColor" => [
+                              "red" => 0.6,
+                              "green" => 0.8,
+                              "blue" => 1.0
+                            ],
+                          ]
+                        ],
+                        "fields" => "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)"
+                    ]
+                ]
+            ]
+        );
+
+        $result = $this->service->spreadsheets->batchUpdate(self::SPREADSHEET_ID, $body);
+        // dd($result);
+    }
 }
