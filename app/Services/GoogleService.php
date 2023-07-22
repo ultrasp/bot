@@ -66,7 +66,6 @@ class GoogleService
         $sheetInfo = $this->service->spreadsheets->get(self::SPREADSHEET_ID);
         $allsheet_info = $sheetInfo['sheets'];
         $idCats = array_column($allsheet_info, 'properties');
-
         if (!$this->checkSheetArray($idCats, $sheetName)) {
             $this->addNewSheet($sheetName);
         }
@@ -88,12 +87,56 @@ class GoogleService
         $body = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest(
             [
                 'requests' => [
-                    'addSheet' => ['properties' => ['title' => $sheetName]]
+                    'addSheet' => [
+                        'properties' => [
+                            'title' => $sheetName,
+                            'gridProperties' => [
+                                'frozenColumnCount' => 1,
+                                'frozenRowCount' => 2
+                            ]
+                        ]
+                    ]
                 ]
             ]
         );
 
         $result = $this->service->spreadsheets->batchUpdate(self::SPREADSHEET_ID, $body);
+    }
+
+    public function makeFrozen()
+    {
+
+        $body = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest(
+            [
+                'requests' => [
+                    'updateSheetProperties' => [
+                        'properties' => [
+                            'sheetId' => 962102522,
+                            // 'title' => '07.2023 1',
+                            'gridProperties' => [
+                                'frozenColumnCount' => 0,
+                                'frozenRowCount' => 2
+                            ]
+                        ],
+                        'fields' => 'gridProperties.frozenRowCount'
+                    ],
+                    'updateSheetProperties' => [
+                        'properties' => [
+                            'sheetId' => 962102522,
+                            // 'title' => '07.2023 1',
+                            'gridProperties' => [
+                                'frozenColumnCount' => 1,
+                                'frozenRowCount' => 2
+                            ]
+                        ],
+                        'fields' => 'gridProperties.frozenColumnCount'
+                    ]
+                ]
+            ]
+        );
+
+        $result = $this->service->spreadsheets->batchUpdate(self::SPREADSHEET_ID, $body);
+        // dd($result);
     }
 
 }
