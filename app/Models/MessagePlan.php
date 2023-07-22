@@ -120,11 +120,13 @@ class MessagePlan extends Model
         $monthEnd = date('Y-m-t', strtotime($date));
         $query = MessagePlan::withTrashed()
             ->where(['type' => $type])
-            ->whereRaw(
-                'chastota in (1,2) or (chastota = 3 and start_at <= "'.$monthEnd.'" and  end_at >= "'.$monthStart.'") or (chastota = 4 and start_at between "'.$monthStart.'" and "'.$monthEnd.'" )'
-            )
             ->whereRaw('(deleted_at is null or exists (select 1 from message_sendings s where s.message_plan_id = message_plans.id and send_time is not null and DATE(send_time) >= "' . $monthStart . '" and DATE(send_time) <= "' . $monthEnd . '" ))')
             ->orderBy('send_minute');
+        if($type == self::TYPE_ASK){
+            $query->whereRaw(
+                '(chastota in (1,2) or (chastota = 3 and start_at <= "'.$monthEnd.'" and  end_at >= "'.$monthStart.'") or (chastota = 4 and start_at between "'.$monthStart.'" and "'.$monthEnd.'" )) '
+            );
+        }
         return $query->get();
     }
 
