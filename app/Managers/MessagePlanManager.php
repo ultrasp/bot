@@ -88,12 +88,10 @@ class MessagePlanManager
         $plans = MessagePlan::getMonthlyInfo($selDate, $isBotCommand ? MessagePlan::TYPE_SYSTEM : MessagePlan::TYPE_ASK);
         $header = [''];
         $days = date('t', strtotime($selDate));
-
         for ($i = 0; $i < $days; $i++) {
             $day = date('d.m.Y', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
             $header[] = $day;
         }
-
         $data =
             [
                 $header
@@ -125,13 +123,14 @@ class MessagePlanManager
                         $dayWorkReport = $workReports->get($key);
                         if ($dayWorkReport) {
                             if ($command == TelegramService::COMMAND_COME_TIME) {
-                                $messageText = str_pad($dayWorkReport->start_hour,2,"0",STR_PAD_LEFT) . ':' . str_pad($dayWorkReport->start_minute,"0",STR_PAD_LEFT);
+                                $messageText = str_pad($dayWorkReport->start_hour,2,"0",STR_PAD_LEFT) . ' : ' . str_pad($dayWorkReport->start_minute,2,"0",STR_PAD_LEFT);
                             }
                             if ($command == TelegramService::COMMAND_LEAVE_WORK) {
-                                $messageText = str_pad($dayWorkReport->end_hour,2,"0",STR_PAD_LEFT) . ':' . str_pad($dayWorkReport->end_minute,2,"0",STR_PAD_LEFT);
+                                $messageText = str_pad($dayWorkReport->end_hour,2,"0",STR_PAD_LEFT) . ' : ' . str_pad($dayWorkReport->end_minute,2,"0",STR_PAD_LEFT);
                             }
                             if ($command == TelegramService::COMMAND_TOTAL_WORK_TIME) {
-                                $messageText = $dayWorkReport->total;
+                                $hour =intdiv($dayWorkReport->total,60);
+                                $messageText = str_pad($hour,2,'0',STR_PAD_LEFT).' : '.str_pad($dayWorkReport->total - $hour*60,2,'0',STR_PAD_LEFT);
                             }
                         }
                     } else {
