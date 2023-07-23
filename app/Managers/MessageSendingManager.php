@@ -9,6 +9,7 @@ use App\Models\Receiver;
 use App\Models\Setting;
 use App\Models\WorkReport;
 use App\Services\TelegramService;
+use App\Utils\BotCommandUtil;
 
 class MessageSendingManager
 {
@@ -100,18 +101,17 @@ class MessageSendingManager
         foreach ($customMessagePlans as $customMPlan) {
 
             $parentPlan = MessagePlan::where('id',$customMPlan->parent_id)->first();
-            $clearedCommand = substr($parentPlan->template,1); 
-            if( in_array($clearedCommand,[TelegramService::COMMAND_COME_TIME,TelegramService::COMMAND_LEAVE_WORK])){
+            if( BotCommandUtil::isInCommands($parentPlan->template,[TelegramService::COMMAND_COME_TIME,TelegramService::COMMAND_LEAVE_WORK])){
                 $incomes = WorkReport::where([
                     'date' => $date,
                     'type' => 1 
                     ])
                     ->get();
-                $incomes =  $incomes->filter(function ($income) use($clearedCommand) {
-                        if($clearedCommand == TelegramService::COMMAND_COME_TIME && $income->start_hour + $income->start_minute > 0){
+                $incomes =  $incomes->filter(function ($income) use($parentPlan) {
+                        if( BotCommandUtil::isEqualCommand($parentPlan->template, TelegramService::COMMAND_COME_TIME) && $income->start_hour + $income->start_minute > 0){
                             return true;
                         }
-                        if($clearedCommand == TelegramService::COMMAND_LEAVE_WORK && $income->end_hour + $income->end_minute > 0){
+                        if( BotCommandUtil::isEqualCommand($parentPlan->template, TelegramService::COMMAND_LEAVE_WORK) && $income->end_hour + $income->end_minute > 0){
                             return true;
                         }
                         return false;

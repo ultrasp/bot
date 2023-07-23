@@ -8,6 +8,7 @@ use App\Models\MessageSending;
 use App\Models\Receiver;
 use App\Models\Setting;
 use App\Models\WorkReport;
+use App\Utils\BotCommandUtil;
 use GuzzleHttp\Client;
 
 class TelegramService
@@ -107,7 +108,7 @@ class TelegramService
         $body = $response->getBody()->getContents();
         return json_decode($body);
     }
-    public function forwardMessage($chat_id, $from_chat_id, $message_id , $protect_content = false)
+    public function forwardMessage($chat_id, $from_chat_id, $message_id, $protect_content = false)
     {
         $params = [
             'chat_id' => $chat_id,
@@ -124,10 +125,12 @@ class TelegramService
 
     const COMMAND_REGISTER = 'register';
     const COMMAND_TOTAL_WORK_TIME = 'total_work_time';
-    const COMMAND_COME_TIME = 'come_time';
-    const COMMAND_LEAVE_WORK = 'leave_work';
-    const COMMAND_LATE_REASON = 'late_reason';
-    const COMMAND_WORK_PLAN = 'work_plan';
+    const COMMAND_COME_TIME = 'Kelish';
+    const COMMAND_LEAVE_WORK = 'Ketish';
+    const COMMAND_LATE_REASON = 'Sabab';
+    const COMMAND_WORK_PLAN = 'Ish plani';
+
+    const COMMAND_DAYLY = 'Daylies';
 
     const COMMAND_OFFICE_ON = 'officeon';
     const COMMAND_OFFICE_OFF = 'officeoff';
@@ -166,23 +169,74 @@ class TelegramService
             self::COMMAND_WORK_PLAN
         ];
     }
+    public function getManagerKeyboard()
+    {
+        return [
+            [
+                [
+                    "text" => "/" . self::COMMAND_OFFICE_ON,
+                    "callback_data" => "/" . self::COMMAND_OFFICE_ON
+                ],
+                [
+                    "text" => "/" . self::COMMAND_OFFICE_OFF,
+                    "callback_data" => "/" . self::COMMAND_OFFICE_OFF
+                ],
+                [
+                    "text" => "/" . self::COMMAND_WORK_LIST,
+                    "callback_data" => "/" . self::COMMAND_WORK_LIST
+                ],
+                [
+                    "text" => "/" . self::COMMAND_REASON,
+                    "callback_data" => "/" . self::COMMAND_REASON
+                ]
+            ]
+        ];
+    }
+
+    public static function makeEmpKeyboard()
+    {
+        return [
+            [
+                [
+                    "text" => self::COMMAND_COME_TIME,
+                    "callback_data" => "/" . self::COMMAND_COME_TIME
+                ],
+                [
+                    'text' => self::COMMAND_LEAVE_WORK,
+                    'callback_data' => "/" . self::COMMAND_LEAVE_WORK
+                ],
+            ],
+            [
+                [
+                    "text" => self::COMMAND_LATE_REASON,
+                    "callback_data" => "/" . self::COMMAND_LATE_REASON
+                ],
+
+            ],
+            [
+                [
+                    "text" => self::COMMAND_WORK_PLAN,
+                    "callback_data" => "/" . self::COMMAND_WORK_PLAN
+                ],
+                [
+                    "text" => self::COMMAND_DAYLY,
+                    "callback_data" => "/" . self::COMMAND_DAYLY
+                ],
+            ]
+        ];
+    }
 
     public function getRespText($command)
     {
         $text = '';
-        switch ($command) {
-            case self::COMMAND_COME_TIME:
-                $text = 'Bugun ish boshlagan vaqtingizni kiriting';
-                break;
-            case self::COMMAND_LEAVE_WORK:
-                $text = 'Ishxonadan ketgan vaqtingizni kiriting';
-                break;
-            case self::COMMAND_LATE_REASON:
-                $text = 'Kech qolishingiz  yoki kelmasligingiz sababini yozing';
-                break;
-            case self::COMMAND_WORK_PLAN:
-                $text = "Bugun qilmoqchi bo'lgan ishlaringizni yozing";
-                break;
+        if(BotCommandUtil::isEqualCommand($command,self::COMMAND_COME_TIME)){
+            $text = 'Bugun ish boshlagan vaqtingizni kiriting';
+        }else if(BotCommandUtil::isEqualCommand($command,self::COMMAND_LEAVE_WORK)){
+            $text = 'Ishxonadan ketgan vaqtingizni kiriting';   
+        }else if(BotCommandUtil::isEqualCommand($command,self::COMMAND_LATE_REASON)){
+            $text = 'Kech qolishingiz  yoki kelmasligingiz sababini yozing';
+        }else if(BotCommandUtil::isEqualCommand($command,self::COMMAND_LATE_REASON)){
+            $text = "Bugun qilmoqchi bo'lgan ishlaringizni yozing";
         }
         return $text;
     }
@@ -200,7 +254,7 @@ class TelegramService
 
     public function getCommandPlanId($text)
     {
-        if (in_array(substr($text, 1), $this->empCommands())) {
+        if ( BotCommandUtil::isInCommands($text, $this->empCommands())) {
             $mplan = MessagePlan::getSystemAsk($text);
             if (!empty($mplan)) {
                 return $mplan->id;
@@ -236,21 +290,20 @@ class TelegramService
     }
     public function callbackCommand($inCommand, $message_plan_id, $writer, $inMessage)
     {
-        $commandText = substr($inCommand, 1);
+        // $commandText = substr($inCommand, 1);
         // dd(in_array(substr($inCommand,1),self::getAllCommands()));
         $empKeyboards = $this->getEmpKeyboard();
-        if (in_array($commandText, self::getSystemBotAsks())) {
+        if (BotCommandUtil::isInCommands($inCommand, self::getSystemBotAsks())) {
             $send_time = date('Y-m-d H:i:s');
             $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
             $item->is_fake = 1;
             $item->saveSendTime(-1);
         }
         // dd($inMessage);
-        $inMessage = substr($inMessage, 1);
-        if (in_array($inMessage, self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
+        if (BotCommandUtil::isInCommands($inMessage,self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
             $this->sendMessage($this->getRespText($inMessage), $writer->chat_id, $empKeyboards);
         }
-        if (self::COMMAND_REGISTER == $commandText && $message_plan_id > 0) {
+        if ( BotCommandUtil::isEqualCommand($inCommand, self::COMMAND_REGISTER) && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
             if ($step == 4) {
@@ -281,42 +334,20 @@ class TelegramService
 
     }
 
-    public function getManagerKeyboard()
-    {
-        return [
-            [
-                [
-                    "text" => "/" . self::COMMAND_OFFICE_ON,
-                    "callback_data" => "/" . self::COMMAND_OFFICE_ON
-                ],
-                [
-                    "text" => "/" . self::COMMAND_OFFICE_OFF,
-                    "callback_data" => "/" . self::COMMAND_OFFICE_OFF
-                ],
-                [
-                    "text" => "/" . self::COMMAND_WORK_LIST,
-                    "callback_data" => "/" . self::COMMAND_WORK_LIST
-                ],
-                [
-                    "text" => "/" . self::COMMAND_REASON,
-                    "callback_data" => "/" . self::COMMAND_REASON
-                ]
-            ]
-        ];
-    }
 
     public function getEmpKeyboard()
     {
-        $keyboards = [];
-        foreach ($this->getSystemBotAsks() as $key => $botCommand) {
-            $keyboards[] = [
-                "text" => "/" . $botCommand,
-                "callback_data" => "/" . $botCommand
-            ];
-        }
-        return [
+        // $keyboards = [];
+        // foreach ($this->getSystemBotAsks() as $key => $botCommand) {
+        //     $keyboards[] = [
+        //         "text" => "/" . $botCommand,
+        //         "callback_data" => "/" . $botCommand
+        //     ];
+        // }
+        $keyboards = $this->makeEmpKeyboard();
+        return
             $keyboards
-        ];
+        ;
     }
 
     public function managerRequestHandle($inCommand, $messageChatId)
@@ -326,59 +357,59 @@ class TelegramService
         $this->sendBotId = self::MANAGER_BOT_ID;
         $emptyText = "Ma'lumot topilmadi";
         // dd($inCommand);
-        if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == self::MANAGER_GROUP_ID) {
+        // if (in_array($commandText, self::getManagerBotAsks()) && $messageChatId == self::MANAGER_GROUP_ID) {
 
-            $inCommand = '';
-            if($commandText == self::COMMAND_OFFICE_ON){
-                $this->handleOfficeCome();
-                return;
+        $inCommand = '';
+        if ($commandText == self::COMMAND_OFFICE_ON) {
+            $this->handleOfficeCome();
+            return;
+        }
+        if ($commandText == self::COMMAND_OFFICE_OFF) {
+            $this->handleOfficeCome(false);
+            return;
+        }
+        if ($commandText == self::COMMAND_WORK_LIST) {
+            $inCommand = self::COMMAND_WORK_PLAN;
+        }
+        if ($commandText == self::COMMAND_REASON) {
+            $inCommand = self::COMMAND_LATE_REASON;
+        }
+
+        $mp = MessagePlan::where(['template' => "/" . $inCommand])->first();
+
+        if (!empty($mp)) {
+
+            $result = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0')->get();
+
+            $messageText = [];
+
+            foreach ($result as $key => $message) {
+                if (!isset($messageText[$message->writer_id])) {
+                    $messageText[$message->writer_id] = '@' . $message->receiver->username . ' ' . $message->receiver->fullname;
+                }
+                if ($commandText != self::COMMAND_OFFICE_ON || $commandText != self::COMMAND_OFFICE_OFF) {
+                    $messageText[$message->writer_id] .= "\n " . $message->message;
+                }
             }
-            if($commandText == self::COMMAND_OFFICE_OFF){
-                $this->handleOfficeCome(false);
-                return;
-            }
-            if ($commandText == self::COMMAND_WORK_LIST) {
-                $inCommand = self::COMMAND_WORK_PLAN;
-            }
-            if ($commandText == self::COMMAND_REASON) {
-                $inCommand = self::COMMAND_LATE_REASON;
-            }
 
-            $mp = MessagePlan::where(['template' => "/" . $inCommand])->first();
+            // dd($messageText);
+            if ($commandText != self::COMMAND_OFFICE_OFF) {
+                $mesageData = implode("\n", $messageText);
+                // dd($incomers);
+            } else {
+                $receivers = Receiver::getEmployees()->keyBy('id');
+                // dd($receivers);
+                foreach ($receivers as $key => $receiver) {
+                    if (!isset($messageText[$receiver->id])) {
+                        $absents[$receiver->id] = '@' . $receiver->username . ' ' . $receiver->fullname;
 
-            if (!empty($mp)) {
-
-                $result = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0')->get();
-
-                $messageText = [];
-
-                foreach ($result as $key => $message) {
-                    if (!isset($messageText[$message->writer_id])) {
-                        $messageText[$message->writer_id] = '@' . $message->receiver->username . ' ' . $message->receiver->fullname;
-                    }
-                    if ($commandText != self::COMMAND_OFFICE_ON || $commandText != self::COMMAND_OFFICE_OFF) {
-                        $messageText[$message->writer_id] .= "\n " . $message->message;
                     }
                 }
-
-                // dd($messageText);
-                if ($commandText != self::COMMAND_OFFICE_OFF) {
-                    $mesageData = implode("\n", $messageText);
-                    // dd($incomers);
-                } else {
-                    $receivers = Receiver::getEmployees()->keyBy('id');
-                    // dd($receivers);
-                    foreach ($receivers as $key => $receiver) {
-                        if (!isset($messageText[$receiver->id])) {
-                            $absents[$receiver->id] = '@' . $receiver->username . ' ' . $receiver->fullname;
-
-                        }
-                    }
-                    $mesageData = implode("\n", $absents);
-                }
-                if (empty($mesageData)) {
-                    $mesageData = $emptyText;
-                }
+                $mesageData = implode("\n", $absents);
+            }
+            if (empty($mesageData)) {
+                $mesageData = $emptyText;
+            }
                 // dd($mesageData);
                 $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
             }
@@ -388,14 +419,15 @@ class TelegramService
         // }
     }
 
-    public function handleOfficeCome($isCome = true){
+    public function handleOfficeCome($isCome = true)
+    {
         $keyboard = $this->getManagerKeyboard();
         $emptyText = "Ma'lumot topilmadi";
         $reports = WorkReport::where([
             'date' => date('Y-m-d'),
-            'type' => 1 
+            'type' => 1
         ])
-        ->get();
+            ->get();
 
         $messageText = [];
 
@@ -403,28 +435,28 @@ class TelegramService
         foreach ($reports as $key => $report) {
             $isOk = false;
             $givedReportWorkers[$report->receiver_id] = $report->receiver_id;
-            if($isCome && ($report->start_hour + $report->start_minute) > 0 && ($report->end_hour + $report->end_minute) == 0){
+            if ($isCome && ($report->start_hour + $report->start_minute) > 0 && ($report->end_hour + $report->end_minute) == 0) {
                 $isOk = true;
             }
-            if(!$isCome && ( $report->end_hour + $report->end_minute) > 0){
+            if (!$isCome && ($report->end_hour + $report->end_minute) > 0) {
                 $isOk = true;
             }
-            if(!$isOk){
+            if (!$isOk) {
                 continue;
             }
             if (!isset($messageText[$report->receiver_id])) {
-                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' .  $report->receiver->fullname.' ';
-                $messageText[$report->receiver_id] .= $isCome ? str_pad($report->start_hour,2,"0",STR_PAD_LEFT) .':'. str_pad($report->start_minute,2,"0",STR_PAD_LEFT) : str_pad($report->end_hour,2,"0",STR_PAD_LEFT) .':'. str_pad($report->end_minute,2,"0",STR_PAD_LEFT);
+                $messageText[$report->receiver_id] = '@' . $report->receiver->username . ' ' . $report->receiver->fullname . ' ';
+                $messageText[$report->receiver_id] .= $isCome ? str_pad($report->start_hour, 2, "0", STR_PAD_LEFT) . ':' . str_pad($report->start_minute, 2, "0", STR_PAD_LEFT) : str_pad($report->end_hour, 2, "0", STR_PAD_LEFT) . ':' . str_pad($report->end_minute, 2, "0", STR_PAD_LEFT);
             }
         }
 
 
-        if(!$isCome){
+        if (!$isCome) {
             $receivers = Receiver::getEmployees()->keyBy('id');
             foreach ($receivers as $key => $receiver) {
                 if (!isset($givedReportWorkers[$receiver->id])) {
                     $messageText[$receiver->id] = '@' . $receiver->username . ' ' . $receiver->fullname;
-    
+
                 }
             }
         }

@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\WorkReport;
 use App\Services\GoogleService;
 use App\Services\TelegramService;
+use App\Utils\BotCommandUtil;
 use Carbon\Carbon;
 
 class MessagePlanManager
@@ -119,18 +120,17 @@ class MessagePlanManager
                 for ($i = 0; $i < $days; $i++) {
                     $day = date('Y-m-d', strtotime(date('Y-m-01', strtotime($selDate)) . ' +' . $i . 'days'));
                     $messageText = '';
-                    $command = substr($plan->template, 1);
-                    if ($isBotCommand && in_array($command, [TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK, TelegramService::COMMAND_TOTAL_WORK_TIME])) {
+                    if ($isBotCommand && BotCommandUtil::isInCommands($plan->template,[TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK, TelegramService::COMMAND_TOTAL_WORK_TIME])) {
                         $key = $day . '_' . $receiver->id;
                         $dayWorkReport = $workReports->get($key);
                         if ($dayWorkReport) {
-                            if ($command == TelegramService::COMMAND_COME_TIME) {
+                            if (BotCommandUtil::isEqualCommand($plan->template,TelegramService::COMMAND_COME_TIME) ) {
                                 $messageText = str_pad($dayWorkReport->start_hour,2,"0",STR_PAD_LEFT) . ' : ' . str_pad($dayWorkReport->start_minute,2,"0",STR_PAD_LEFT);
                             }
-                            if ($command == TelegramService::COMMAND_LEAVE_WORK) {
+                            if (BotCommandUtil::isEqualCommand($plan->template , TelegramService::COMMAND_LEAVE_WORK)) {
                                 $messageText = str_pad($dayWorkReport->end_hour,2,"0",STR_PAD_LEFT) . ' : ' . str_pad($dayWorkReport->end_minute,2,"0",STR_PAD_LEFT);
                             }
-                            if ($command == TelegramService::COMMAND_TOTAL_WORK_TIME) {
+                            if (BotCommandUtil::isEqualCommand($plan->template, TelegramService::COMMAND_TOTAL_WORK_TIME)) {
                                 $hour =intdiv($dayWorkReport->total,60);
                                 $messageText = str_pad($hour,2,'0',STR_PAD_LEFT).' : '.str_pad($dayWorkReport->total - $hour*60,2,'0',STR_PAD_LEFT);
                             }

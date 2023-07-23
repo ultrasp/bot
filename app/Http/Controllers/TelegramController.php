@@ -10,7 +10,9 @@ use App\Models\MessageSending;
 use App\Models\Receiver;
 use App\Models\Setting;
 use App\Models\TelegramUpdate;
+use App\Services\GoogleService;
 use App\Services\TelegramService;
+use App\Utils\BotCommandUtil;
 use Illuminate\Http\Request;
 
 class TelegramController extends Controller
@@ -82,7 +84,7 @@ class TelegramController extends Controller
                 return;
             }
 
-            if(!property_exists($message, 'message')){
+            if (!property_exists($message, 'message')) {
                 return;
             }
             $isTextMessage = property_exists($message->message, 'text');
@@ -107,9 +109,8 @@ class TelegramController extends Controller
             }
 
             if ($isTextMessage) {
-                $subCommand = substr($message->message->text, 1);
-                if ($tgManager->isWorkTimeCommand($subCommand)) {
-                    $tgManager->sendWorkTime($subCommand, $writer->chat_id);
+                if (BotCommandUtil::isWorkTimeCommand($message->message->text)) {
+                    $tgManager->sendWorkTime($message->message->text, $writer->chat_id);
                     return;
                 }
             }
@@ -171,7 +172,7 @@ class TelegramController extends Controller
         $command = null;
 
         //handle register
-        if ($sending && $sending->message_plan->template == "/" . TelegramService::COMMAND_REGISTER) {
+        if ($sending && BotCommandUtil::isEqualCommand($sending->message_plan->template, TelegramService::COMMAND_REGISTER)) {
             $command = $sending->message_plan->template;
             $isUpdated = false;
             if ($sending->step == 1 && property_exists($message->message, 'text')) {
@@ -197,7 +198,7 @@ class TelegramController extends Controller
             }
 
         }
-        if ($message == "/" . TelegramService::COMMAND_REGISTER) {
+        if (BotCommandUtil::isEqualCommand($message, TelegramService::COMMAND_REGISTER)) {
             $command = $message;
         }
         return $command;

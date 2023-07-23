@@ -9,6 +9,7 @@ use App\Models\Receiver;
 use App\Models\Setting;
 use App\Models\WorkReport;
 use App\Services\TelegramService;
+use App\Utils\BotCommandUtil;
 use GuzzleHttp\Client;
 
 class TelegramManager
@@ -170,14 +171,9 @@ class TelegramManager
         return $keyboards;
     }
 
-    public function isWorkTimeCommand($command)
+    public function sendWorkTime($text, $chat_id)
     {
-        return in_array($command, [TelegramService::COMMAND_COME_TIME, TelegramService::COMMAND_LEAVE_WORK]);
-    }
-
-    public function sendWorkTime($command, $chat_id)
-    {
-        $this->sendHour($chat_id, $command == TelegramService::COMMAND_COME_TIME ? TelegramManager::WORK_START : self::WORK_END);
+        $this->sendHour($chat_id, BotCommandUtil::isEqualCommand($text,TelegramService::COMMAND_COME_TIME)  ? TelegramManager::WORK_START : self::WORK_END);
     }
 
     public function isFileMessage($tUpdate){
