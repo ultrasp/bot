@@ -28,6 +28,7 @@ class Group extends Model
             if (!empty($excelGroup['code'])) {
                 $group = self::getbyCode($excelGroup['code']);
                 $group->title = $excelGroup['title'];
+                $group->isShow = $excelGroup['isShow'];
                 $group->save();
                 $group->receivers()->sync($excelGroup['users']);
                 $nonRemoveGroupIds[] = $group->id;

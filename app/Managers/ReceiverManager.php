@@ -14,7 +14,8 @@ use App\Services\TelegramService;
 class ReceiverManager
 {
 
-    public static function updateReceiverData(){
+    public static function updateReceiverData()
+    {
         $isChanged = ReceiverManager::readSheet();
         $setting = Setting::getItem(Setting::MAKE_USER_LIST);
         if ($setting->param_value == null || $setting->param_value == 1 || $isChanged) {
@@ -40,9 +41,9 @@ class ReceiverManager
 
         $userTypeColNumber = 3;
 
-        $groupTitles = self::readGroups(isset($users[1]) ? $users[1] : [] );
+        $groupTitles = self::readGroups(isset($users[1]) ? $users[1] : [], $users[0]);
 
-        foreach ($users  as $row) {
+        foreach ($users as $row) {
             if (empty($row[0]) || $row[$userTypeColNumber] == '') {
                 continue;
             }
@@ -51,12 +52,12 @@ class ReceiverManager
                 continue;
             $user->user_type = $row[$userTypeColNumber];
             $user->save();
-            
-            if(!empty($groupTitles)){
-                foreach($groupTitles as $colIndex => $group){
-                    if(!empty($row[$colIndex])){
+
+            if (!empty($groupTitles)) {
+                foreach ($groupTitles as $colIndex => $group) {
+                    if (!empty($row[$colIndex])) {
                         $groupTitles[$colIndex]['users'][] = $user->id;
-                        if(empty($groupTitles[$colIndex]['code'])){
+                        if (empty($groupTitles[$colIndex]['code'])) {
                             $groupTitles[$colIndex]['code'] = $row[$colIndex];
                         }
                     }
@@ -71,18 +72,21 @@ class ReceiverManager
         return 1;
     }
 
-    public static function readGroups(array $row){
+    public static function readGroups(array $row, array $markRow)
+    {
+        // dd($markRow);
         $groupStartColumn = 8;
         $groupTitles = [];
-        if(count($row) >= $groupStartColumn){
-            for ($i=$groupStartColumn; $i < count($row); $i++) {
-                if(!empty($row[$i])){
+        if (count($row) >= $groupStartColumn) {
+            for ($i = $groupStartColumn; $i < count($row); $i++) {
+                if (!empty($row[$i])) {
                     $groupTitles[$i] = [
                         'title' => $row[$i],
                         'users' => [],
-                        'code' => null
+                        'code' => null,
+                        'isShow' => (isset($markRow[$i]) && $markRow[$i] == 1 ? 1 : 0)
                     ];
-                } 
+                }
             }
         }
         return $groupTitles;
@@ -92,7 +96,7 @@ class ReceiverManager
     public static function writeToSheet()
     {
         $all = Receiver::with('groups')->get();
-        $firstRow = 
+        $firstRow =
             [
                 'username',
                 'last_name',
@@ -105,7 +109,7 @@ class ReceiverManager
             ]
         ;
         $groups = Group::get();
-        foreach($groups as $group){
+        foreach ($groups as $group) {
             $firstRow[] = $group->title;
         }
         $data[] = $firstRow;
@@ -121,17 +125,17 @@ class ReceiverManager
                 $user->fullname ?? '',
                 $user->contact_phone ?? ''
             ];
-            foreach($groups as $group){
+            foreach ($groups as $group) {
                 $inGroups = $user->groups->keyBy('id');
-                if($inGroups->has($group->id)){
+                if ($inGroups->has($group->id)) {
                     $row[] = $group->code;
-                }else{
+                } else {
                     $row[] = '';
                 }
             }
             $data[] = $row;
         }
-        $data  = array_values($data);
+        $data = array_values($data);
         $sheet = GoogleService::usersSheet;
         $service = new GoogleService();
         $service->deleteRows($sheet);
