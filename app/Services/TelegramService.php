@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Group;
 use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
@@ -124,6 +125,20 @@ class TelegramService
         return json_decode($body);
     }
 
+    public function copyMessage($chat_id, $from_chat_id, $message_id)
+    {
+        $params = [
+            'chat_id' => $chat_id,
+            'from_chat_id' => $from_chat_id,
+            'message_id' => $message_id,
+        ];
+        $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/copyMessage', ['json' => $params]);
+
+        $body = $response->getBody()->getContents();
+        // var_dump($body);
+        return json_decode($body);
+    }
+
     const COMMAND_REGISTER = 'register';
     const COMMAND_TOTAL_WORK_TIME = 'total_work_time';
     const COMMAND_COME_TIME = 'Kelish';
@@ -184,14 +199,22 @@ class TelegramService
                     "text" => "/" . self::COMMAND_OFFICE_OFF,
                     "callback_data" => "/" . self::COMMAND_OFFICE_OFF
                 ],
+            ],
+            [
+                [
+                    "text" => "/" . self::COMMAND_REASON,
+                    "callback_data" => "/" . self::COMMAND_REASON
+                ]
+            ],
+            [
                 [
                     "text" => "/" . self::COMMAND_WORK_LIST,
                     "callback_data" => "/" . self::COMMAND_WORK_LIST
                 ],
                 [
-                    "text" => "/" . self::COMMAND_REASON,
-                    "callback_data" => "/" . self::COMMAND_REASON
-                ]
+                    "text" => "/" . self::COMMAND_DAYLY,
+                    "callback_data" => "/" . self::COMMAND_DAYLY
+                ],
             ]
         ];
     }
@@ -354,7 +377,7 @@ class TelegramService
         ;
     }
 
-    public function managerRequestHandle($inCommand, $messageChatId)
+    public function managerRequestHandle($inCommand, $params = [])
     {
         $commandText = substr($inCommand, 1);
         $keyboard = $this->getManagerKeyboard();
@@ -378,48 +401,105 @@ class TelegramService
         if ($commandText == self::COMMAND_REASON) {
             $inCommand = self::COMMAND_LATE_REASON;
         }
+        if ($commandText == self::COMMAND_DAYLY) {
+            $this->handleDailies();
+            return;
+        }
+        if ($commandText == self::COMMAND_DAYLY_GROUP) {
+            $inCommand = self::COMMAND_DAYLY;
+        }
 
         $mp = MessagePlan::where(['template' => "/" . $inCommand])->first();
 
         if (!empty($mp)) {
 
-            $result = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0')->get();
+            $query = IncomeMessage::where(['message_plan_id' => $mp->id])->whereRaw('Date(created_at) = "' . date('Y-m-d') . '"')->where('sending_id', '>', '0');
 
+            if ($inCommand == self::COMMAND_DAYLY) {
+                $query->whereRaw('
+                    exists (select 1 from receivers r join group_receiver gr on gr.receiver_id = r.id  where r.id = writer_id and gr.group_id = ' . $params['groupId'] . '  )
+                ');
+            }
+            $result = $query->get();
             $messageText = [];
 
+            $groupMessagePatternt = 'https://t.me/c/' . substr(TelegramService::MANAGER_GROUP_ID, 4) . '/';
             foreach ($result as $key => $message) {
                 if (!isset($messageText[$message->writer_id])) {
-                    $messageText[$message->writer_id] = '@' . $message->receiver->username . ' ' . $message->receiver->fullname;
+                    $messageText[$message->writer_id] = ['text' => '@' . $message->receiver->username . ' ' . $message->receiver->fullname];
                 }
                 if ($commandText != self::COMMAND_OFFICE_ON || $commandText != self::COMMAND_OFFICE_OFF) {
-                    $messageText[$message->writer_id] .= "\n " . $message->message;
-                }
-            }
-
-            // dd($messageText);
-            if ($commandText != self::COMMAND_OFFICE_OFF) {
-                $mesageData = implode("\n", $messageText);
-                // dd($incomers);
-            } else {
-                $receivers = Receiver::getEmployees()->keyBy('id');
-                // dd($receivers);
-                foreach ($receivers as $key => $receiver) {
-                    if (!isset($messageText[$receiver->id])) {
-                        $absents[$receiver->id] = '@' . $receiver->username . ' ' . $receiver->fullname;
-
+                    if (str_starts_with($message->message, $groupMessagePatternt)) {
+                        $messageText[$message->writer_id][] = ['file' => str_replace($groupMessagePatternt,'',$message->message)];
+                    } else {
+                        $messageText[$message->writer_id][] = ['text' => "\n" . $message->message];
                     }
                 }
-                $mesageData = implode("\n", $absents);
             }
-            if (empty($mesageData)) {
-                $mesageData = $emptyText;
+
+            if ($commandText == self::COMMAND_OFFICE_OFF) {
+                $receivers = Receiver::getEmployees()->keyBy('id');
+                // dd($receivers);
+                $absents = [];
+                foreach ($receivers as $key => $receiver) {
+                    if (!isset($messageText[$receiver->id])) {
+                        $absents[$receiver->id] = ['text' => '@' . $receiver->username . ' ' . $receiver->fullname];
+                    }
+                }
+                $messageText = $absents;
+            } 
+
+            if (empty($messageText)) {
+                $responce = $this->sendMessage($emptyText, self::MANAGER_GROUP_ID, $keyboard);
+            }else{
+                $sendMessage = '';
+                foreach($messageText as $messageItem){
+                    if(isset($messageItem['text'])){
+                        $sendMessage .= $messageItem['text'];
+                    }
+                    if(isset($messageItem['file'])){
+                        if(!empty($sendMessage)){
+                            $responce = $this->sendMessage($sendMessage, self::MANAGER_GROUP_ID, $keyboard);
+                            $sendMessage = '';
+                        }
+                        $this->copyMessage(self::MANAGER_GROUP_ID,self::MANAGER_GROUP_ID,$messageItem['file']);
+                    }
+                }
             }
-            // dd($mesageData);
-            $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
+            // foreach ($mesageData as $sendMessage) {
+            //     $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
+            // }
         }
         // else{
         // $responce = $this->sendMessage('test', self::MANAGER_GROUP_ID, $keyboard);
         // }
+    }
+
+    const CALLBACK_DAILY_GROUP = 'callbackDailyGroup';
+
+    const COMMAND_DAYLY_GROUP = 'daily_group';
+
+    public function managerRequestCallbackHandle($message)
+    {
+        $callbackData = $message->callback_query->data;
+        if (str_starts_with($callbackData, self::CALLBACK_DAILY_GROUP)) {
+            $groupId = str_replace($callbackData, self::CALLBACK_DAILY_GROUP . '_', '');
+            $this->managerRequestHandle('/'.self::COMMAND_DAYLY_GROUP, ['groupId' => $groupId]);
+        }
+    }
+
+
+    public function handleDailies()
+    {
+        $groups = Group::where('isShow', 1)->get();
+        $groupKeyboard = [];
+        foreach ($groups as $key => $group) {
+            $groupKeyboard[] = [
+                "text" => $group->title,
+                "callback_data" => 'group_selector_' . $group->id
+            ];
+        }
+        $responce = $this->sendMessage('Guruhni tanlang', self::MANAGER_GROUP_ID, $groupKeyboard, true);
     }
 
     public function handleOfficeCome($isCome = true)

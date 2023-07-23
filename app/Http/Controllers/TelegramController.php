@@ -39,7 +39,7 @@ class TelegramController extends Controller
         //     }
         // }
         // dd($telegrams);
-        $update = TelegramUpdate::where(['id' => 2408])->first();
+        $update = TelegramUpdate::where(['id' => 5379])->first();
         $data = $update->update_json;
         // $data = '{"update_id":319791533,"message":{"message_id":2479,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1686152394,"photo":[{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADcwADLwQ","file_unique_id":"AQADDMwxG0NeCEh4","file_size":994,"width":90,"height":51},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADbQADLwQ","file_unique_id":"AQADDMwxG0NeCEhy","file_size":14226,"width":320,"height":180},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeAADLwQ","file_unique_id":"AQADDMwxG0NeCEh9","file_size":66357,"width":800,"height":450},{"file_id":"AgACAgIAAxkBAAIJr2SApMpiTjQmNJrl_aF66H0YhfWaAAIMzDEbQ14ISDuiiVl2XmIhAQADAgADeQADLwQ","file_unique_id":"AQADDMwxG0NeCEh-","file_size":134407,"width":1280,"height":720}]}}';
         // $data = '{"update_id":319789677,"message":{"message_id":154,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":2242981,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1684568282,"text":"\/come_time","entities":[{"offset":0,"length":10,"type":"bot_command"}]}}';
@@ -66,13 +66,16 @@ class TelegramController extends Controller
             if (property_exists($message, 'message')) {
                 $service->managerRequestHandle($message->message->text, $message->message->chat->id);
             }
+            if(property_exists($message, 'callback_query')){
+                $service->managerRequestCallbackHandle($message);
+            }
         } catch (\Throwable $th) {
             //throw $th;
         }
 
 
     }
-    
+
     public function handleMessage($data)
     {
         try {
