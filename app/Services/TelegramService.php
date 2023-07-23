@@ -409,7 +409,7 @@ class TelegramService
             $inCommand = self::COMMAND_DAYLY;
         }
 
-        $mp = MessagePlan::where(['template' => "/" . $inCommand])->first();
+        $mp = MessagePlan::where(['template' => $inCommand])->first();
 
         if (!empty($mp)) {
 
@@ -424,9 +424,10 @@ class TelegramService
             $messageText = [];
 
             $groupMessagePatternt = 'https://t.me/c/' . substr(TelegramService::MANAGER_GROUP_ID, 4) . '/';
+
             foreach ($result as $key => $message) {
                 if (!isset($messageText[$message->writer_id])) {
-                    $messageText[$message->writer_id] = ['text' => '@' . $message->receiver->username . ' ' . $message->receiver->fullname];
+                    $messageText[$message->writer_id][] = ['text' => "\n" .'@' . $message->receiver->username . ' ' . $message->receiver->fullname];
                 }
                 if ($commandText != self::COMMAND_OFFICE_ON || $commandText != self::COMMAND_OFFICE_OFF) {
                     if (str_starts_with($message->message, $groupMessagePatternt)) {
@@ -453,17 +454,24 @@ class TelegramService
                 $responce = $this->sendMessage($emptyText, self::MANAGER_GROUP_ID, $keyboard);
             }else{
                 $sendMessage = '';
-                foreach($messageText as $messageItem){
-                    if(isset($messageItem['text'])){
-                        $sendMessage .= $messageItem['text'];
-                    }
-                    if(isset($messageItem['file'])){
-                        if(!empty($sendMessage)){
-                            $responce = $this->sendMessage($sendMessage, self::MANAGER_GROUP_ID, $keyboard);
-                            $sendMessage = '';
+                // dd($messageText);
+                foreach($messageText as $sender){
+                    foreach($sender as $messageItem){
+                        if(isset($messageItem['text'])){
+                            $sendMessage .= $messageItem['text'];
                         }
-                        $this->copyMessage(self::MANAGER_GROUP_ID,self::MANAGER_GROUP_ID,$messageItem['file']);
+                        if(isset($messageItem['file'])){
+                            if(!empty($sendMessage)){
+                                $responce = $this->sendMessage($sendMessage, self::MANAGER_GROUP_ID, $keyboard);
+                                $sendMessage = '';
+                            }
+                            $this->copyMessage(self::MANAGER_GROUP_ID,self::MANAGER_GROUP_ID,$messageItem['file']);
+                        }
                     }
+                }
+                // dd($sendMessage);
+                if(!empty($sendMessage)){
+                    $this->sendMessage($sendMessage, self::MANAGER_GROUP_ID, $keyboard);
                 }
             }
             // foreach ($mesageData as $sendMessage) {
@@ -499,7 +507,11 @@ class TelegramService
                 "callback_data" => 'group_selector_' . $group->id
             ];
         }
-        $responce = $this->sendMessage('Guruhni tanlang', self::MANAGER_GROUP_ID, $groupKeyboard, true);
+        if(empty($groupKeyboard)){
+            $this->sendMessage('Guruhlar belgilanmagan', self::MANAGER_GROUP_ID,$this->getManagerKeyboard());
+        }else{
+            $this->sendMessage('Guruhni tanlang', self::MANAGER_GROUP_ID, [$groupKeyboard], true);
+        }
     }
 
     public function handleOfficeCome($isCome = true)
