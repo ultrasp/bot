@@ -115,6 +115,9 @@ class MessagePlanManager
             $data[] = [$receiver->lastname . ' ' . $receiver->firstname];
             $nameRows[] = count($data) - 1;
             foreach ($plans as $plan) {
+                if(!$isBotCommand && !$plan->canSendReceiver($receiver)){
+                    continue;
+                }
                 $row = [
                     ($isBotCommand ? '' : $plan->covertToString()) . ' ' . $plan->template
                 ];
