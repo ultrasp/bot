@@ -10,6 +10,7 @@ use App\Models\WorkReport;
 use App\Services\GoogleService;
 use App\Services\TelegramService;
 use App\Utils\BotCommandUtil;
+use App\Utils\HourUtil;
 use Carbon\Carbon;
 
 class MessagePlanManager
@@ -125,14 +126,14 @@ class MessagePlanManager
                         $dayWorkReport = $workReports->get($key);
                         if ($dayWorkReport) {
                             if (BotCommandUtil::isEqualCommand($plan->template,TelegramService::COMMAND_COME_TIME) ) {
-                                $messageText = str_pad($dayWorkReport->start_hour,2,"0",STR_PAD_LEFT) . ' : ' . str_pad($dayWorkReport->start_minute,2,"0",STR_PAD_LEFT);
+                                $messageText = HourUtil::formatTime($dayWorkReport->start_hour) . ' : ' . HourUtil::formatTime($dayWorkReport->start_minute);
                             }
                             if (BotCommandUtil::isEqualCommand($plan->template , TelegramService::COMMAND_LEAVE_WORK)) {
-                                $messageText = str_pad($dayWorkReport->end_hour,2,"0",STR_PAD_LEFT) . ' : ' . str_pad($dayWorkReport->end_minute,2,"0",STR_PAD_LEFT);
+                                $messageText = HourUtil::formatTime($dayWorkReport->end_hour) . ' : ' . HourUtil::formatTime($dayWorkReport->end_minute);
                             }
                             if (BotCommandUtil::isEqualCommand($plan->template, TelegramService::COMMAND_TOTAL_WORK_TIME)) {
                                 $hour =intdiv($dayWorkReport->total,60);
-                                $messageText = str_pad($hour,2,'0',STR_PAD_LEFT).' : '.str_pad($dayWorkReport->total - $hour*60,2,'0',STR_PAD_LEFT);
+                                $messageText = HourUtil::formatTime($hour).' : '.HourUtil::formatTime($dayWorkReport->total - $hour*60);
                             }
                         }
                     } else {

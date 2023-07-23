@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\WorkReport;
 use App\Services\TelegramService;
 use App\Utils\BotCommandUtil;
+use App\Utils\HourUtil;
 use GuzzleHttp\Client;
 
 class TelegramManager
@@ -106,12 +107,12 @@ class TelegramManager
             if ($commandType == self::WORK_START) {
                 $report->start_hour = $hour;
                 $report->start_minute = $minute;
-                $appendText .= "Ishga kelgan vaqtingiz " . $hour . ":" . $minute;
+                $appendText .= "Ishga kelgan vaqtingiz " . HourUtil::formatTime($hour) . ":" . HourUtil::formatTime($minute);
             }
             if ($commandType == self::WORK_END) {
                 $report->end_hour = $hour;
                 $report->end_minute = $minute;
-                $appendText .= "Ishdan ketgan vaqtingiz " . $hour . ":" . $minute;
+                $appendText .= "Ishdan ketgan vaqtingiz " . HourUtil::formatTime($hour) . ":" . HourUtil::formatTime($minute);
             }
             $report->setTotal();
             Setting::saveParam(Setting::MAKE_SYSTEM_REPORT, 1);
