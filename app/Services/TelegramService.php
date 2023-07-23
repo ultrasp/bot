@@ -82,6 +82,7 @@ class TelegramService
             }
             $params['reply_markup'] = $keyboardParams;
         }
+        // dd($params);
         $response = $this->client->request('POST', self::TELEGRAM_URL . $this->sendBotId . '/sendMessage', ['json' => $params]);
 
         $body = $response->getBody()->getContents();
@@ -231,13 +232,13 @@ class TelegramService
     public function getRespText($command)
     {
         $text = '';
-        if(BotCommandUtil::isEqualCommand($command,self::COMMAND_COME_TIME)){
+        if (BotCommandUtil::isEqualCommand($command, self::COMMAND_COME_TIME)) {
             $text = 'Bugun ish boshlagan vaqtingizni kiriting';
-        }else if(BotCommandUtil::isEqualCommand($command,self::COMMAND_LEAVE_WORK)){
-            $text = 'Ishxonadan ketgan vaqtingizni kiriting';   
-        }else if(BotCommandUtil::isEqualCommand($command,self::COMMAND_LATE_REASON)){
+        } else if (BotCommandUtil::isEqualCommand($command, self::COMMAND_LEAVE_WORK)) {
+            $text = 'Ishxonadan ketgan vaqtingizni kiriting';
+        } else if (BotCommandUtil::isEqualCommand($command, self::COMMAND_LATE_REASON)) {
             $text = 'Kech qolishingiz  yoki kelmasligingiz sababini yozing';
-        }else if(BotCommandUtil::isEqualCommand($command,self::COMMAND_LATE_REASON)){
+        } else if (BotCommandUtil::isEqualCommand($command, self::COMMAND_LATE_REASON)) {
             $text = "Bugun qilmoqchi bo'lgan ishlaringizni yozing";
         }
         return $text;
@@ -250,13 +251,14 @@ class TelegramService
             self::COMMAND_COME_TIME,
             self::COMMAND_LEAVE_WORK,
             self::COMMAND_LATE_REASON,
-            self::COMMAND_WORK_PLAN
+            self::COMMAND_WORK_PLAN,
+            self::COMMAND_DAYLY
         ];
     }
 
     public function getCommandPlanId($text)
     {
-        if ( BotCommandUtil::isInCommands($text, $this->empCommands())) {
+        if (BotCommandUtil::isInCommands($text, $this->empCommands())) {
             $mplan = MessagePlan::getSystemAsk($text);
             if (!empty($mplan)) {
                 return $mplan->id;
@@ -302,10 +304,10 @@ class TelegramService
             $item->saveSendTime(-1);
         }
         // dd($inMessage);
-        if (BotCommandUtil::isInCommands($inMessage,self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
+        if (BotCommandUtil::isInCommands($inMessage, self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
             $this->sendMessage($this->getRespText($inMessage), $writer->chat_id, $empKeyboards);
         }
-        if ( BotCommandUtil::isEqualCommand($inCommand, self::COMMAND_REGISTER) && $message_plan_id > 0) {
+        if (BotCommandUtil::isEqualCommand($inCommand, self::COMMAND_REGISTER) && $message_plan_id > 0) {
             $maxstep = MessageSending::where(['receiver_id' => $writer->id, 'message_plan_id' => $message_plan_id])->whereNotNull('answer_time')->max('step');
             $step = (empty($maxstep) ? 0 : $maxstep) + 1;
             if ($step == 4) {
