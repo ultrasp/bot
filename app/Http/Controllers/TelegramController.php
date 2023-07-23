@@ -198,8 +198,8 @@ class TelegramController extends Controller
             }
 
         }
-        if (BotCommandUtil::isEqualCommand($message, TelegramService::COMMAND_REGISTER)) {
-            $command = $message;
+        if (property_exists($message->message, 'text') && BotCommandUtil::isEqualCommand($message->message->text, TelegramService::COMMAND_REGISTER)) {
+            $command = $message->message->text;
         }
         return $command;
     }
