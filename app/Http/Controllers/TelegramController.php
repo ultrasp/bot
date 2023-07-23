@@ -72,6 +72,7 @@ class TelegramController extends Controller
 
 
     }
+    
     public function handleMessage($data)
     {
         try {
