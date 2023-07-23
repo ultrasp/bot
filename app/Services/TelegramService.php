@@ -318,7 +318,6 @@ class TelegramService
     public function callbackCommand($inCommand, $message_plan_id, $writer, $inMessage)
     {
         // $commandText = substr($inCommand, 1);
-        // dd(in_array(substr($inCommand,1),self::getAllCommands()));
         $empKeyboards = $this->getEmpKeyboard();
         if (BotCommandUtil::isInCommands($inCommand, self::getSystemBotAsks())) {
             $send_time = date('Y-m-d H:i:s');
@@ -326,7 +325,7 @@ class TelegramService
             $item->is_fake = 1;
             $item->saveSendTime(-1);
         }
-        // dd($inMessage);
+
         if (BotCommandUtil::isInCommands($inMessage, self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
             $this->sendMessage($this->getRespText($inMessage), $writer->chat_id, $empKeyboards);
         }
@@ -427,11 +426,11 @@ class TelegramService
 
             foreach ($result as $key => $message) {
                 if (!isset($messageText[$message->writer_id])) {
-                    $messageText[$message->writer_id][] = ['text' => "\n" .'@' . $message->receiver->username . ' ' . $message->receiver->fullname];
+                    $messageText[$message->writer_id][] = ['text' => "\n" . '@' . $message->receiver->username . ' ' . $message->receiver->fullname];
                 }
                 if ($commandText != self::COMMAND_OFFICE_ON || $commandText != self::COMMAND_OFFICE_OFF) {
                     if (str_starts_with($message->message, $groupMessagePatternt)) {
-                        $messageText[$message->writer_id][] = ['file' => str_replace($groupMessagePatternt,'',$message->message)];
+                        $messageText[$message->writer_id][] = ['file' => str_replace($groupMessagePatternt, '', $message->message)];
                     } else {
                         $messageText[$message->writer_id][] = ['text' => "\n" . $message->message];
                     }
@@ -448,35 +447,39 @@ class TelegramService
                     }
                 }
                 $messageText = $absents;
-            } 
+            }
 
             if (empty($messageText)) {
                 $responce = $this->sendMessage($emptyText, self::MANAGER_GROUP_ID, $keyboard);
-            }else{
+            } else {
                 $sendMessage = '';
                 // dd($messageText);
-                foreach($messageText as $sender){
-                    foreach($sender as $messageItem){
-                        if(isset($messageItem['text'])){
+                foreach ($messageText as $sender) {
+                    foreach ($sender as $messageItem) {
+                        if (isset($messageItem['text'])) {
                             $sendMessage .= $messageItem['text'];
                         }
-                        if(isset($messageItem['file'])){
-                            if(!empty($sendMessage)){
+                        if (isset($messageItem['file'])) {
+                            if (!empty($sendMessage)) {
                                 $responce = $this->sendMessage($sendMessage, self::MANAGER_GROUP_ID, $keyboard);
                                 $sendMessage = '';
                             }
-                            $this->copyMessage(self::MANAGER_GROUP_ID,self::MANAGER_GROUP_ID,$messageItem['file']);
+                            try {
+                                $this->sendBotId = self::BOTID;
+                                $this->copyMessage(self::MANAGER_GROUP_ID, self::MANAGER_GROUP_ID, $messageItem['file']);
+                                $this->sendBotId = self::MANAGER_BOT_ID;
+                            } catch (\Throwable $th) {
+                                echo $th->getMessage();
+                                exit;
+                            }
                         }
                     }
                 }
                 // dd($sendMessage);
-                if(!empty($sendMessage)){
+                if (!empty($sendMessage)) {
                     $this->sendMessage($sendMessage, self::MANAGER_GROUP_ID, $keyboard);
                 }
             }
-            // foreach ($mesageData as $sendMessage) {
-            //     $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
-            // }
         }
         // else{
         // $responce = $this->sendMessage('test', self::MANAGER_GROUP_ID, $keyboard);
@@ -491,8 +494,8 @@ class TelegramService
     {
         $callbackData = $message->callback_query->data;
         if (str_starts_with($callbackData, self::CALLBACK_DAILY_GROUP)) {
-            $groupId = str_replace($callbackData, self::CALLBACK_DAILY_GROUP . '_', '');
-            $this->managerRequestHandle('/'.self::COMMAND_DAYLY_GROUP, ['groupId' => $groupId]);
+            $groupId = str_replace( self::CALLBACK_DAILY_GROUP . '_', '',$callbackData);
+            $this->managerRequestHandle('/' . self::COMMAND_DAYLY_GROUP, ['groupId' => $groupId]);
         }
     }
 
@@ -504,12 +507,12 @@ class TelegramService
         foreach ($groups as $key => $group) {
             $groupKeyboard[] = [
                 "text" => $group->title,
-                "callback_data" => 'group_selector_' . $group->id
+                "callback_data" => self::CALLBACK_DAILY_GROUP . '_' . $group->id
             ];
         }
-        if(empty($groupKeyboard)){
-            $this->sendMessage('Guruhlar belgilanmagan', self::MANAGER_GROUP_ID,$this->getManagerKeyboard());
-        }else{
+        if (empty($groupKeyboard)) {
+            $this->sendMessage('Guruhlar belgilanmagan', self::MANAGER_GROUP_ID, $this->getManagerKeyboard());
+        } else {
             $this->sendMessage('Guruhni tanlang', self::MANAGER_GROUP_ID, [$groupKeyboard], true);
         }
     }

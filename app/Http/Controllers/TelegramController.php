@@ -61,6 +61,7 @@ class TelegramController extends Controller
         try {
             TelegramUpdate::storeData($data);
             // $data = '{"update_id":736985814,"message":{"message_id":2,"from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"chat":{"id":-1001524098666,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","type":"private"},"date":1685029690,"text":"\/Daylies","entities":[{"offset":0,"length":9,"type":"bot_command"}]}}';
+            // $data = '{"update_id":736986342,"callback_query":{"id":"9633533135766579","from":{"id":2242981,"is_bot":false,"first_name":"Umid","last_name":"Hamidov","username":"Samirchik03","language_code":"en"},"message":{"message_id":1348,"from":{"id":6027276819,"is_bot":true,"first_name":"UsHelperBotManager","username":"UsHelperManagerbot"},"chat":{"id":-1001524098666,"title":"Test bot","type":"supergroup"},"date":1690125137,"text":"Guruhni tanlang","reply_markup":{"inline_keyboard":[[{"text":"Shimkent","callback_data":"callbackDailyGroup_2"}]]}},"chat_instance":"-3621411919573543680","data":"callbackDailyGroup_2"}}';
             $message = json_decode($data);
             $service = new TelegramService();
             // dd($message);
