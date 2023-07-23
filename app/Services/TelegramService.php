@@ -156,7 +156,8 @@ class TelegramService
             self::COMMAND_COME_TIME,
             self::COMMAND_LEAVE_WORK,
             self::COMMAND_LATE_REASON,
-            self::COMMAND_WORK_PLAN
+            self::COMMAND_WORK_PLAN,
+            self::COMMAND_DAYLY
         ];
     }
 
@@ -166,7 +167,8 @@ class TelegramService
             self::COMMAND_COME_TIME,
             self::COMMAND_LEAVE_WORK,
             self::COMMAND_LATE_REASON,
-            self::COMMAND_WORK_PLAN
+            self::COMMAND_WORK_PLAN,
+            self::COMMAND_DAYLY
         ];
     }
     public function getManagerKeyboard()
