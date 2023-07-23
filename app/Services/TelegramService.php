@@ -410,9 +410,8 @@ class TelegramService
             if (empty($mesageData)) {
                 $mesageData = $emptyText;
             }
-                // dd($mesageData);
-                $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
-            }
+            // dd($mesageData);
+            $responce = $this->sendMessage($mesageData, self::MANAGER_GROUP_ID, $keyboard);
         }
         // else{
         // $responce = $this->sendMessage('test', self::MANAGER_GROUP_ID, $keyboard);
