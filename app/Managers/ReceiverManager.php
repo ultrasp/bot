@@ -106,12 +106,18 @@ class ReceiverManager
                 'message_cnt',
                 'fullname',
                 'contact_phone'
-            ]
-        ;
+            ];
+        
+        $markRow = [];
+        for ($i=0; $i < count($firstRow) ; $i++) { 
+            $markRow[] = '';
+        }
         $groups = Group::get();
         foreach ($groups as $group) {
             $firstRow[] = $group->title;
+            $markRow[] = ($group->isShow == 1 ? '1' : '');
         }
+        $data[] = $markRow;
         $data[] = $firstRow;
 
         foreach ($all as $user) {
@@ -139,7 +145,7 @@ class ReceiverManager
         $sheet = GoogleService::usersSheet;
         $service = new GoogleService();
         $service->deleteRows($sheet);
-        $service->writeValues($sheet, $data);
+        $service->writeValues($sheet, $data,'!A1');
     }
 
 }

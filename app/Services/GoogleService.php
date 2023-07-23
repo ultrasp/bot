@@ -44,11 +44,11 @@ class GoogleService
         return $response->getValues();
     }
 
-    public function writeValues($sheet, $rows)
+    public function writeValues($sheet, $rows,$start='!A2')
     {
         $valueRange = new \Google_Service_Sheets_ValueRange();
         $valueRange->setValues($rows);
-        $range = $sheet . '!A2'; // where the replacement will start, here, first column and second line
+        $range = $sheet . $start; // where the replacement will start, here, first column and second line
         $options = ['valueInputOption' => 'USER_ENTERED'];
         $this->service->spreadsheets_values->update(self::SPREADSHEET_ID, $range, $valueRange, $options);
     }
