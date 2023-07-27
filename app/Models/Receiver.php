@@ -16,6 +16,11 @@ class Receiver extends Model
         return self::firstOrNew(['username' => $username]);
     }
 
+    public static function getByChatId(string $chatId)
+    {
+        return self::firstOrNew(['chat_id' => $chatId]);
+    }
+
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(Group::class);
@@ -39,10 +44,11 @@ class Receiver extends Model
     }
     public static function storeData($chatData, $userType = self::USER_TYPE_GUEST)
     {
-        $user = self::getByUsername($chatData->username);
+        $user = self::getByChatId($chatData->id);
         if (empty($user->id)) {
             $user = self::newItem($chatData->username, property_exists($chatData,'last_name') ? $chatData->last_name : null, $chatData->first_name, $chatData->id, $userType);
         }
+        $user->username = $chatData->username; 
         $user->last_answer_time = date('Y-m-d H:i:s');
         $user->message_cnt += 1;
         $user->save();
