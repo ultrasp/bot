@@ -145,8 +145,14 @@ class MessageSendingManager
             }
 
             if(!empty($senders)){
-                foreach ($senders as $sender) {
-                    $service->sendMessage($customMPlan->template, $sender->chat_id);
+                foreach ($senders as $sender) 
+                {
+                    try {
+                        $botMessage = BotSending::storeData($sender->id,$customMPlan->template,$customMPlan->id);
+                        $update = $service->sendMessage($customMPlan->template, $sender->chat_id);
+                        $botMessage->storeUpdate(json_encode($update));
+                    } catch (\Throwable $th) {
+                    }
                 }
             }
         }
