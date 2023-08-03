@@ -2,6 +2,7 @@
 
 namespace App\Managers;
 
+use App\Models\BotSending;
 use App\Models\IncomeMessage;
 use App\Models\MessagePlan;
 use App\Models\MessageSending;
