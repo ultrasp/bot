@@ -118,7 +118,7 @@ class TelegramController extends Controller
                 if (BotCommandUtil::isWorkTimeCommand($message->message->text)) {
                     $messagePlanId = $service->getCommandPlanId($message->message->text);
                     IncomeMessage::storeData($message->message->text, $message, $writer->id, 0, $messagePlanId);
-                    $service->saveFakeSeding($writer, $$messagePlanId, $message->message->text);
+                    $service->saveFakeSeding($writer, $messagePlanId, $message->message->text);
                     $tgManager->sendWorkTime($message->message->text, $writer->chat_id);
                     return;
                 }
