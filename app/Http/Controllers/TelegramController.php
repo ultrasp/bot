@@ -68,7 +68,7 @@ class TelegramController extends Controller
             if (property_exists($message, 'message')) {
                 $service->managerRequestHandle($message->message->text, $message->message->chat->id);
             }
-            if(property_exists($message, 'callback_query')){
+            if (property_exists($message, 'callback_query')) {
                 $service->managerRequestCallbackHandle($message);
             }
         } catch (\Throwable $th) {
@@ -116,6 +116,9 @@ class TelegramController extends Controller
 
             if ($isTextMessage) {
                 if (BotCommandUtil::isWorkTimeCommand($message->message->text)) {
+                    $messagePlanId = $service->getCommandPlanId($message->message->text);
+                    IncomeMessage::storeData($message->message->text, $message, $writer->id, 0, $messagePlanId);
+                    $service->saveFakeSeding($writer, $$messagePlanId, $message->message->text);
                     $tgManager->sendWorkTime($message->message->text, $writer->chat_id);
                     return;
                 }
@@ -133,6 +136,9 @@ class TelegramController extends Controller
 
             if (!empty($writer) && $messagePlanId == 0) {
                 $sending = MessageSending::getLatestSendByWorkerId($writer->id);
+                if(BotCommandUtil::isWorkTimeCommand($sending->message)){
+                    $sending = null;
+                }
                 // dd($sending);
                 $command = $this->saveResponceCallback($sending, $writer, $message);
                 $messagePlanId = $sending ? $sending->message_plan_id : null;

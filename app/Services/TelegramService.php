@@ -315,15 +315,19 @@ class TelegramService
         $body = $response->getBody()->getContents();
         return json_decode($body);
     }
+
+    public function saveFakeSeding($writer,$message_plan_id,$inCommand){
+        $send_time = date('Y-m-d H:i:s');
+        $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
+        $item->is_fake = 1;
+        $item->saveSendTime(-1);
+    }
     public function callbackCommand($inCommand, $message_plan_id, $writer, $inMessage)
     {
         // $commandText = substr($inCommand, 1);
         $empKeyboards = $this->getEmpKeyboard();
         if (BotCommandUtil::isInCommands($inCommand, self::getSystemBotAsks())) {
-            $send_time = date('Y-m-d H:i:s');
-            $item = MessageSending::newItem($writer->id, $message_plan_id, $send_time, $inCommand, false);
-            $item->is_fake = 1;
-            $item->saveSendTime(-1);
+            $this->saveFakeSeding($writer,$message_plan_id,$inCommand);
         }
 
         if (BotCommandUtil::isInCommands($inMessage, self::getSystemBotAsks()) && !empty($this->getRespText($inMessage))) {
