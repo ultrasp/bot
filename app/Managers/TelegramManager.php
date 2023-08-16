@@ -100,7 +100,7 @@ class TelegramManager
             return;
         }
 
-        $receiver = Receiver::where(['chat_id' => $update->callback_query->from->id])->first();
+        $receiver = Receiver::where(['chat_id' => trim($update->callback_query->from->id)])->first();
         $appendText = date('d.m.Y', strtotime($date)) . " ";
         if (!empty($receiver)) {
             $report = WorkReport::getReceiverDailyReport($receiver->id, date('Y-m-d'));
