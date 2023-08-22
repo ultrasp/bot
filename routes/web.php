@@ -17,7 +17,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/test','TelegramController@send');
+// Route::get('/test','TelegramController@send');
 Route::get('/init','MessageController@makeInit');
 
 Route::post('/listener','TelegramController@listener');
@@ -39,6 +39,8 @@ Route::get('/send','MessageController@sendQuestion');
 //
 Route::get('/cron','CronController@run');
 Route::get('/daily','GoogleController@addDailyData');
+
+Route::post('/lid','TargetController@storeLid');
 
 
 Route::get('/test','TelegramController@test');

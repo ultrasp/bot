@@ -44,6 +44,15 @@ class GoogleService
         return $response->getValues();
     }
 
+    public function appendValues($spreadSheetId,$sheet, $rows)
+    {
+        $valueRange = new \Google_Service_Sheets_ValueRange();
+        $valueRange->setValues($rows);
+        $range = $sheet; // the service will detect the last row of this sheet
+        $options = ['valueInputOption' => 'USER_ENTERED'];
+        $this->service->spreadsheets_values->append($spreadSheetId, $range, $valueRange, $options);
+    }
+
     public function writeValues($sheet, $rows,$start='!A2')
     {
         $valueRange = new \Google_Service_Sheets_ValueRange();
