@@ -49,7 +49,7 @@ class GoogleService
         $valueRange = new \Google_Service_Sheets_ValueRange();
         $valueRange->setValues($rows);
         $range = $sheet; // the service will detect the last row of this sheet
-        $options = ['valueInputOption' => 'USER_ENTERED'];
+        $options = []; //['valueInputOption' => 'USER_ENTERED'];
         $this->service->spreadsheets_values->append($spreadSheetId, $range, $valueRange, $options);
     }
 
@@ -58,7 +58,7 @@ class GoogleService
         $valueRange = new \Google_Service_Sheets_ValueRange();
         $valueRange->setValues($rows);
         $range = $sheet . $start; // where the replacement will start, here, first column and second line
-        $options = [];// ['valueInputOption' => 'USER_ENTERED'];
+        $options = ['valueInputOption' => 'USER_ENTERED'];
         $this->service->spreadsheets_values->update(self::SPREADSHEET_ID, $range, $valueRange, $options);
     }
 
