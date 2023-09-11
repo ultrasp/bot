@@ -12,7 +12,11 @@ class TargetController extends Controller
     {
         $name = $request->name;
         $phone = $request->phone;
-        TargetManager::writeLid($name,$phone);
+        $source = $request->source;
+        if(empty($source)){
+            $source = 1;
+        }
+        TargetManager::writeLid($name,$phone,$source);
 
     }
 

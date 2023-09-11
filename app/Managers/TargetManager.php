@@ -17,9 +17,16 @@ class TargetManager
 {
     const START_COLUMN = 2;
 
-    const TARGET_SPREADSHEET_ID = '1x4BgNf5nzvgR7PCqo6FbkD5Lr81O_JvvMn12YOfi96U'; 
-    public static function writeLid($name,$phone)
+    const TARGET_SPREADSHEET_ID = '1x4BgNf5nzvgR7PCqo6FbkD5Lr81O_JvvMn12YOfi96U';
+    const LADY_SPREADSHEET_ID = '1cLPP38HjYZtLW_zoq45uVsVYu03zNihms2pSyuzQ-es';
+
+    public static function writeLid($name, $phone, $source)
     {
+        $excels = [
+            1 => self::TARGET_SPREADSHEET_ID,
+            3 => self::LADY_SPREADSHEET_ID,
+        ];
+
         $gooleService = new GoogleService();
         $newRow = [
             date('Y-m-d H:i:s'),
@@ -27,8 +34,8 @@ class TargetManager
             $phone
         ];
         $rows = [$newRow]; // you can append several rows at once
-        $gooleService->appendValues(self::TARGET_SPREADSHEET_ID, 'Sheet1', $rows);
-   }
+        $gooleService->appendValues($excels[$source], 'Sheet1', $rows);
+    }
 
 
 }
