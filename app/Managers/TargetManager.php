@@ -18,7 +18,7 @@ class TargetManager
     const START_COLUMN = 2;
 
     const TARGET_SPREADSHEET_ID = '1x4BgNf5nzvgR7PCqo6FbkD5Lr81O_JvvMn12YOfi96U';
-    const LADY_SPREADSHEET_ID = '1cLPP38HjYZtLW_zoq45uVsVYu03zNihms2pSyuzQ-es';
+    const LADY_SPREADSHEET_ID = '1A566YC7EZxgxXAfKf1KA53xeQQuya_sBEgx-4n3BYgk';
 
     public static function writeLid($name, $phone, $source)
     {
