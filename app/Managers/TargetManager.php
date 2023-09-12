@@ -19,11 +19,13 @@ class TargetManager
 
     const TARGET_SPREADSHEET_ID = '1x4BgNf5nzvgR7PCqo6FbkD5Lr81O_JvvMn12YOfi96U';
     const LADY_SPREADSHEET_ID = '1A566YC7EZxgxXAfKf1KA53xeQQuya_sBEgx-4n3BYgk';
+    const DPUZ_SPREADSHEET_ID = '1kPZwKqrriIXic3G-kiv5rrqTQ9-1u29mLXyQQ3DhWy0';
 
     public static function writeLid($name, $phone, $source)
     {
         $excels = [
             1 => self::TARGET_SPREADSHEET_ID,
+            2 => self::DPUZ_SPREADSHEET_ID,
             3 => self::LADY_SPREADSHEET_ID,
         ];
 
