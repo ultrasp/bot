@@ -436,7 +436,11 @@ class TelegramService
                     if (str_starts_with($message->message, $groupMessagePatternt)) {
                         $messageText[$message->writer_id][] = ['file' => str_replace($groupMessagePatternt, '', $message->message)];
                     } else {
-                        $messageText[$message->writer_id][] = ['text' => "\n" . $message->message];
+                        $messageData = $message->message;
+                        if($commandText == self::COMMAND_REASON){
+                            $messageData = date('H:i',strtotime($message->created_at)).' -'.$messageData;
+                        }
+                        $messageText[$message->writer_id][] = ['text' => "\n" . $messageData];
                     }
                 }
             }
