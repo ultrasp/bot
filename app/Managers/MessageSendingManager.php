@@ -123,6 +123,7 @@ class MessageSendingManager
                     'message_plan_id' => $customMPlan->parent_id,
                 ])
                     ->where('sending_id', '!=', 0)
+                    ->whereRaw("date(created_at) = '".date('Y-m-d')."'")
                     ->get()
                     ->groupBy('writer_id');
     
